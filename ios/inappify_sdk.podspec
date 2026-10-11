@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.summary          = 'Inappify Flutter SDK for offerings, entitlements and purchases.'
   s.description      = 'Flutter integration with the Inappify Kotlin SDK on Android, Dart V2 on iOS, and the Inappify JavaScript SDK on Web.'
   s.homepage         = 'https://github.com/InappifyLabs/flutter-sdk'
-  s.license          = { :file => '../LICENSE' }
+  s.license          = { :type => 'Apache-2.0', :file => '../LICENSE' }
   s.author           = 'InappifyLabs'
   s.source           = { :git => 'https://github.com/InappifyLabs/flutter-sdk.git', :tag => 'v0.1.0' }
   s.source_files     = 'Classes/**/*'

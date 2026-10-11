@@ -15,21 +15,18 @@ failure instead of silently creating a different payment session.
 
 ## Install
 
-Use Flutter 3.44.0 or newer with Dart 3.12.0 or newer. Add this Git dependency:
+Use Flutter 3.44.0 or newer with Dart 3.12.0 or newer. Add the package dependency:
 
 ```yaml
 dependencies:
-  inappify_sdk:
-    git:
-      url: https://github.com/InappifyLabs/flutter-sdk.git
-      ref: v0.1.0
+  inappify_sdk: ^0.1.0
 ```
 
 Run `flutter pub get` and rebuild the app. Android uses the exact native dependency
 `com.github.InappifyLabs:kotlin-sdk:v0.1.0`. Follow
-[Android setup](docs/ANDROID.md) for repositories, tools and the foreground Activity.
+[Android setup](doc/ANDROID.md) for repositories, tools and the foreground Activity.
 You do not need a separate Flutter billing package or a second native SDK instance.
-This Git release does not imply publication on pub.dev.
+The GitHub release remains available as an alternative Git dependency pinned to `v0.1.0`.
 
 ## Configure
 
@@ -68,7 +65,7 @@ route, so changing a purchase parameter cannot switch stores.
 
 Configure on each app startup for the current user. Android configuration schedules
 recovery of pending work and eligible owned store items. See
-[store recovery](docs/STORES_AND_RECOVERY.md) for deduplication, subscription renewal
+[store recovery](doc/STORES_AND_RECOVERY.md) for deduplication, subscription renewal
 and consumable delivery requirements. Configuration success is not a payment receipt.
 
 ## Select an offering and purchase
@@ -107,15 +104,15 @@ callback as authoritative.
 
 ## Documentation
 
-- [Getting started](docs/GETTING_STARTED.md): configuration, identity and typed results.
-- [API reference](docs/API_REFERENCE.md): public methods, models, defaults and limits.
-- [Android](docs/ANDROID.md): native bridge and build setup.
-- [Stores and recovery](docs/STORES_AND_RECOVERY.md): Bazaar, Myket and durable fulfillment.
-- [iOS](docs/IOS.md): V2 Direct session and storage companion.
-- [Web](docs/WEB.md): JavaScript prerequisite, Identity Tickets, OTP and browser checkout.
-- [Paywalls and targeting](docs/PAYWALLS_AND_TARGETING.md): server selection and UI limitations.
-- [Security and cache](docs/SECURITY_AND_CACHE.md): trust, persistence and diagnostics.
-- [Releasing](docs/RELEASING.md): validation and publication.
+- [Getting started](doc/GETTING_STARTED.md): configuration, identity and typed results.
+- [API reference](doc/API_REFERENCE.md): public methods, models, defaults and limits.
+- [Android](doc/ANDROID.md): native bridge and build setup.
+- [Stores and recovery](doc/STORES_AND_RECOVERY.md): Bazaar, Myket and durable fulfillment.
+- [iOS](doc/IOS.md): V2 Direct session and storage companion.
+- [Web](doc/WEB.md): JavaScript prerequisite, Identity Tickets, OTP and browser checkout.
+- [Paywalls and targeting](doc/PAYWALLS_AND_TARGETING.md): server selection and UI limitations.
+- [Security and cache](doc/SECURITY_AND_CACHE.md): trust, persistence and diagnostics.
+- [Releasing](doc/RELEASING.md): validation and publication.
 
 The repository includes automated contract tests and compile/build checks.
 Real store purchases, subscription renewals and backend deployment still require
@@ -123,7 +120,5 @@ integration testing against your own app and store accounts.
 
 ## License
 
-The Flutter source has no specified source-code license yet; [LICENSE](LICENSE)
-retains the original placeholder. This release does not assign a new license. The
-Android dependency includes its own license and third-party notices in the Kotlin
-repository. Do not infer the Flutter source license from its native dependency.
+The Flutter SDK is licensed under [Apache-2.0](LICENSE). The Android dependency
+includes its own Apache-2.0 license and third-party notices in the Kotlin repository.

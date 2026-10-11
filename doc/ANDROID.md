@@ -21,7 +21,7 @@ The native SDK and Poolakey are downloaded from JitPack. Add JitPack to the **ho
 maven { url = uri("https://jitpack.io") }
 ```
 
-Use [the installation guide](GETTING_STARTED.md) for the Flutter Git dependency. The native SDK includes Poolakey and a namespaced Myket billing implementation; the host does not need another billing plugin, manually copied AIDL classes, or store-specific SDK flavors.
+Use [the installation guide](GETTING_STARTED.md) for the Flutter package dependency. The native SDK includes Poolakey and a namespaced Myket billing implementation; the host does not need another billing plugin, manually copied AIDL classes, or store-specific SDK flavors.
 
 ## Configure after resolving the application account
 

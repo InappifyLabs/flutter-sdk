@@ -26,4 +26,4 @@ On macOS, compile the Swift infrastructure with `flutter build ios --simulator -
 
 Keep one authoritative session backend per platform. Android must delegate to the Kotlin SDK, iOS owns V2 lifecycle in Dart, and Web delegates to the JavaScript provider. Preserve channel envelopes, persisted-state scope and the durable delivery-before-acknowledgement rule. Add meaningful contract tests when changing these behaviors.
 
-Review the [release procedure](docs/RELEASING.md) before changing version metadata or dependencies.
+Review the [release procedure](doc/RELEASING.md) before changing version metadata or dependencies.

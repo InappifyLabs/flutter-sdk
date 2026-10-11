@@ -2,14 +2,11 @@
 
 ## Install and choose the platform
 
-The package keeps its import name `inappify_sdk`. Pin the release tag:
+The package keeps its import name `inappify_sdk`. Add the package dependency:
 
 ```yaml
 dependencies:
-  inappify_sdk:
-    git:
-      url: https://github.com/InappifyLabs/flutter-sdk.git
-      ref: v0.1.0
+  inappify_sdk: ^0.1.0
 ```
 
 The declared tool minimum is Flutter 3.44.0 / Dart 3.12.0. Android requires JDK 17.

@@ -1,6 +1,7 @@
 ## 0.1.0
 
 - Publish the first stable release from the 0.1.0 beta series.
+- License the Flutter SDK under Apache-2.0 and prepare pub.dev installation documentation.
 - Pin Android to `com.github.InappifyLabs:kotlin-sdk:v0.1.0`.
 - Align the Flutter package, Dart/iOS mobile SDK and CocoaPods metadata at `0.1.0`.
 - Preserve the existing public API, platform capabilities and payment behavior.

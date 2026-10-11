@@ -9,4 +9,17 @@ Flutter package/mobile version `0.1.0` is tagged `v0.1.0`. Android pins the inde
 5. Check CI for the exact release commit. Create a GitHub stable release with **prerelease disabled**, current behavior and validation notes. Use prerelease status only for beta versions. A GitHub release and Git dependency are separate from pub.dev publishing.
 6. Resolve the Git tag from an independent consumer and verify that the Flutter package version and Android Kotlin dependency match. Record any device/backend checks separately from compilation.
 
-This repository is distributed through GitHub/Git. It is not an announcement of a pub.dev release. Public consumers install the Git URL and tag shown in the [getting started guide](GETTING_STARTED.md).
+## Publish to pub.dev
+
+Use Flutter 3.44.0 / Dart 3.12.0 or newer. Ensure `LICENSE` contains Apache-2.0,
+review the installation instructions, and run `flutter pub publish --dry-run`.
+This preflight checks the package layout and publication contents; it does not
+run the project test suites. Commit the reviewed package before publishing.
+
+Run `flutter pub publish` and authenticate with the Google Account that will own
+the package. Review and confirm the upload. After publication, consumers can use
+`inappify_sdk: ^0.1.0`. The first upload can subsequently be transferred to a
+verified publisher through pub.dev.
+
+GitHub tags remain available for Git consumers. Pub.dev uploads are made from the
+reviewed source tree; never move an existing Git tag when preparing publication.

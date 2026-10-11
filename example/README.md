@@ -11,9 +11,9 @@ For Android Bazaar or Myket, add `--dart-define=INAPPIFY_MARKET=bazar` or `myket
 
 The example Android activity extends `FlutterFragmentActivity` for store UI. Its host build uses JDK17/AGP9.1.1/Gradle9.3.1/SDK37, and its Flutter3.47.1 defaults keep the Kotlin/new-DSL compatibility flags. The example uses the current Flutter deployment floors (Android24/iOS15); the plugin's native library/podspec floors are lower and are not Flutter support claims.
 
-Web requires the separately loaded JavaScript provider described in [Web setup](../docs/WEB.md). Configuring Web here starts anonymously. An authenticated host needs its backend's Identity Ticket flow. A Web build alone does not load that provider or validate live checkout.
+Web requires the separately loaded JavaScript provider described in [Web setup](../doc/WEB.md). Configuring Web here starts anonymously. An authenticated host needs its backend's Identity Ticket flow. A Web build alone does not load that provider or validate live checkout.
 
-The SDK paywall preview renders its remote UI; purchase buttons currently require the host's own integration. See [API reference](../docs/API_REFERENCE.md), [paywalls and targeting](../docs/PAYWALLS_AND_TARGETING.md), and [store recovery and fulfillment](../docs/STORES_AND_RECOVERY.md).
+The SDK paywall preview renders its remote UI; purchase buttons currently require the host's own integration. See [API reference](../doc/API_REFERENCE.md), [paywalls and targeting](../doc/PAYWALLS_AND_TARGETING.md), and [store recovery and fulfillment](../doc/STORES_AND_RECOVERY.md).
 
 Build without installing or making a payment:
 
