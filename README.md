@@ -1,7 +1,7 @@
 # Inappify Flutter SDK
 
 Flutter SDK for Inappify sessions, offerings, entitlements and purchases.
-The package name is `inappify_sdk`; this repository starts at **0.1.0-beta.0**.
+The package name is `inappify_sdk`; the current release is **0.1.0**.
 
 | Platform | Session and payment implementation |
 | --- | --- |
@@ -22,11 +22,11 @@ dependencies:
   inappify_sdk:
     git:
       url: https://github.com/InappifyLabs/flutter-sdk.git
-      ref: v0.1.0-beta.0
+      ref: v0.1.0
 ```
 
 Run `flutter pub get` and rebuild the app. Android uses the exact native dependency
-`com.github.InappifyLabs:kotlin-sdk:v0.1.0-beta.0`. Follow
+`com.github.InappifyLabs:kotlin-sdk:v0.1.0`. Follow
 [Android setup](docs/ANDROID.md) for repositories, tools and the foreground Activity.
 You do not need a separate Flutter billing package or a second native SDK instance.
 This Git release does not imply publication on pub.dev.
@@ -117,13 +117,13 @@ callback as authoritative.
 - [Security and cache](docs/SECURITY_AND_CACHE.md): trust, persistence and diagnostics.
 - [Releasing](docs/RELEASING.md): validation and publication.
 
-The beta is validated with automated contract tests and compile/build checks.
+The repository includes automated contract tests and compile/build checks.
 Real store purchases, subscription renewals and backend deployment still require
 integration testing against your own app and store accounts.
 
 ## License
 
 The Flutter source has no specified source-code license yet; [LICENSE](LICENSE)
-retains the original placeholder. This beta does not assign a new license. The
+retains the original placeholder. This release does not assign a new license. The
 Android dependency includes its own license and third-party notices in the Kotlin
 repository. Do not infer the Flutter source license from its native dependency.

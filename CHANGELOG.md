@@ -1,3 +1,11 @@
+## 0.1.0
+
+- Publish the first stable release from the 0.1.0 beta series.
+- Pin Android to `com.github.InappifyLabs:kotlin-sdk:v0.1.0`.
+- Align the Flutter package, Dart/iOS mobile SDK and CocoaPods metadata at `0.1.0`.
+- Preserve the existing public API, platform capabilities and payment behavior.
+- Keep the independent JavaScript provider baseline at `@inappifylabs/web-sdk@0.1.0-beta.3`.
+
 ## 0.1.0-beta.0
 
 - Establish the InappifyLabs Flutter SDK repository and beta release series.

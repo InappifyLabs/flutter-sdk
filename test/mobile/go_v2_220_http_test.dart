@@ -53,7 +53,7 @@ void main() {
       );
       expect(
         adapter.requests.last.headers['User-Agent'],
-        'InAppify-Flutter-iOS/0.1.0-beta.0',
+        'InAppify-Flutter-iOS/0.1.0',
       );
       expect(jsonEncode(traces), isNot(contains('private-')));
       expect(

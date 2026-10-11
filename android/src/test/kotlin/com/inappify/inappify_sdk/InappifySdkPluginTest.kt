@@ -45,7 +45,7 @@ internal class InappifySdkPluginTest {
       InappifyChannelContract.SUPPORTED_OPERATIONS,
       capabilities["supportedOperations"],
     )
-    assertEquals("0.1.0-beta.0", capabilities["sdkVersion"])
+    assertEquals("0.1.0", capabilities["sdkVersion"])
     assertNull(result.errorCode)
     assertFalse(result.notImplementedCalled)
   }

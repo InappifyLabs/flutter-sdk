@@ -167,9 +167,9 @@ void main() {
       await configure(country: ' ir ');
       await catalog();
       expect(sdk.calls.first.body['country'], 'IR');
-      expect(sdk.calls.first.body['sdkVersion'], '0.1.0-beta.0');
+      expect(sdk.calls.first.body['sdkVersion'], '0.1.0');
       expect(sdk.calls.last.endpoint, 'offerings');
-      expect(sdk.calls.last.body['sdkVersion'], '0.1.0-beta.0');
+      expect(sdk.calls.last.body['sdkVersion'], '0.1.0');
       expect(sdk.calls.last.body.containsKey('forceVersion'), false);
       expect(client.snapshot.forceVersion, null);
       expect(client.snapshot.offerings!.forceVersion, null);

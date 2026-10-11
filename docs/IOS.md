@@ -2,7 +2,7 @@
 
 On iOS, Inappify runs its mobile V2 lifecycle and Direct payment flow in Dart. The Swift plugin supplies application metadata and Keychain persistence through `inappify_sdk`; it does not call the Kotlin SDK or implement an App Store billing client. Bazaar and Myket purchase, inventory and subscription recovery are Android-only.
 
-The Flutter package and mobile behavior version are `0.1.0-beta.0`. [Android](ANDROID.md) explains the separate Kotlin dependency.
+The Flutter package and mobile behavior version are `0.1.0`. [Android](ANDROID.md) explains the separate Kotlin dependency.
 
 ## Application setup
 

@@ -551,7 +551,7 @@ class InappifyV2BridgeTest {
     private fun snapshot(forceVersion: Long? = 1L, market: InappifyMarket = InappifyMarket.BAZAAR): InappifySnapshot = InappifySnapshot::class.java.declaredConstructors
       .first { it.parameterCount == 16 }.apply { isAccessible = true }.newInstance(
         7L, true, false, "\$INAAnonymousID:synthetic", market, "IR", "1.2.0",
-        "0.1.0-beta.0", null, forceVersion, 12L, null, null, false, false, if (market == InappifyMarket.MYKET) "MyKet" else "Bazar",
+        "0.1.0", null, forceVersion, 12L, null, null, false, false, if (market == InappifyMarket.MYKET) "MyKet" else "Bazar",
       ) as InappifySnapshot
 
     private fun storePurchase(status: InappifyStorePurchaseStatus, market: InappifyMarket = InappifyMarket.BAZAAR): InappifyPurchase =

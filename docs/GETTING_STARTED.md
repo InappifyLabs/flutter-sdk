@@ -9,7 +9,7 @@ dependencies:
   inappify_sdk:
     git:
       url: https://github.com/InappifyLabs/flutter-sdk.git
-      ref: v0.1.0-beta.0
+      ref: v0.1.0
 ```
 
 The declared tool minimum is Flutter 3.44.0 / Dart 3.12.0. Android requires JDK 17.
@@ -177,7 +177,7 @@ fulfillment and acknowledgement, described in [stores/recovery](STORES_AND_RECOV
 The static `customerInfo`, `offerings` and `snapshot` getters mirror the latest
 backend state. Dispose stream subscriptions when the observing UI/service ends.
 The configured session's `sdkVersion` is available through both snapshot and the
-static getter; Android reports native `0.1.0-beta.0`, iOS reports the Dart client
+static getter; Android reports native `0.1.0`, iOS reports the Dart client
 version, and Web reports its JavaScript backend version.
 
 Mobile cached session loading happens inside `configureResult`. The separately
