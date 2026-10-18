@@ -587,9 +587,6 @@ class GoV2Platform extends InappifySdkPlatform {
             _isAnonymous(request.appUserIdentifier)) {
           _fail('VALIDATION', 'APP_USER_ID_INVALID');
         }
-        if (request.apiKey != _options?.apiKey) {
-          _fail('CONFIGURATION', 'API_KEY_MISMATCH');
-        }
         if (_logoutPending) _fail('AUTH', 'LOGOUT_PENDING');
         _requireNetwork();
         final pending = _objectOrNull(_document['pendingLogin']);

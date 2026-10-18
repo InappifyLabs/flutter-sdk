@@ -1,7 +1,7 @@
 # Inappify Flutter SDK
 
 Flutter SDK for Inappify sessions, offerings, entitlements and purchases.
-The package name is `inappify_sdk`; the current release is **0.1.0**.
+The package name is `inappify_sdk`; the current release is **0.1.1**.
 
 | Platform | Session and payment implementation |
 | --- | --- |
@@ -19,14 +19,14 @@ Use Flutter 3.44.0 or newer with Dart 3.12.0 or newer. Add the package dependenc
 
 ```yaml
 dependencies:
-  inappify_sdk: ^0.1.0
+  inappify_sdk: ^0.1.1
 ```
 
 Run `flutter pub get` and rebuild the app. Android uses the exact native dependency
-`com.github.InappifyLabs:kotlin-sdk:v0.1.0`. Follow
+`com.github.InappifyLabs:kotlin-sdk:v0.1.1`. Follow
 [Android setup](doc/ANDROID.md) for repositories, tools and the foreground Activity.
 You do not need a separate Flutter billing package or a second native SDK instance.
-The GitHub release remains available as an alternative Git dependency pinned to `v0.1.0`.
+The GitHub release remains available as an alternative Git dependency pinned to `v0.1.1`.
 
 ## Configure
 

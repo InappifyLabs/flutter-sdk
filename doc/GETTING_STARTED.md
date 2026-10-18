@@ -6,7 +6,7 @@ The package keeps its import name `inappify_sdk`. Add the package dependency:
 
 ```yaml
 dependencies:
-  inappify_sdk: ^0.1.0
+  inappify_sdk: ^0.1.1
 ```
 
 The declared tool minimum is Flutter 3.44.0 / Dart 3.12.0. Android requires JDK 17.
@@ -128,10 +128,8 @@ identifier. Login and logout are explicit lifecycle operations:
 import 'package:inappify_sdk/inappify_sdk.dart';
 
 Future<InappifySdkResult<void>> switchMobileAccount({
-  required String publicAppKey,
   required String userId,
 }) => InappifySdk.loginResult(
-  apiKey: publicAppKey,
   appUserIdentifier: userId,
 );
 
@@ -139,8 +137,8 @@ Future<InappifySdkResult<void>> leaveMobileAccount() =>
     InappifySdk.logoutResult();
 ```
 
-Use the configured app's key for mobile login. The backend invalidates stale
-customer/offering state across identity changes. An incomplete transition can
+Mobile login uses the configured session; no app key is passed again. The backend
+invalidates stale customer/offering state across identity changes. An incomplete transition can
 require recovery; do not restore access from a saved previous-user mirror.
 Anonymous identifiers and persistence are SDK-owned. `isCustomerAnonymous` is a
 string helper, not authentication proof; use the authoritative result/snapshot.
@@ -174,7 +172,7 @@ fulfillment and acknowledgement, described in [stores/recovery](STORES_AND_RECOV
 The static `customerInfo`, `offerings` and `snapshot` getters mirror the latest
 backend state. Dispose stream subscriptions when the observing UI/service ends.
 The configured session's `sdkVersion` is available through both snapshot and the
-static getter; Android reports native `0.1.0`, iOS reports the Dart client
+static getter; Android reports native `0.1.1`, iOS reports the Dart client
 version, and Web reports its JavaScript backend version.
 
 Mobile cached session loading happens inside `configureResult`. The separately

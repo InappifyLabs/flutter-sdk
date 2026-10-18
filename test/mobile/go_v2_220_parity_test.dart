@@ -67,10 +67,7 @@ void main() {
       jsonDecode(store.raw!) as Map<String, dynamic>;
   Future<InappifySdkResult<void>> login([String identity = '123']) =>
       client.login(
-        InappifyLoginRequest(
-          apiKey: 'public-fixture',
-          appUserIdentifier: identity,
-        ),
+        InappifyLoginRequest(appUserIdentifier: identity,),
       );
   const purchase = InappifyPurchaseRequest(
     productIdentifier: 'coins',
@@ -141,10 +138,7 @@ void main() {
         final operation = logout
             ? coordinator.logout()
             : coordinator.login(
-                const InappifyLoginRequest(
-                  apiKey: 'public-fixture',
-                  appUserIdentifier: '123',
-                ),
+                const InappifyLoginRequest(appUserIdentifier: '123',),
               );
         await Future<void>.delayed(Duration.zero);
         final pending = coordinator.state.snapshot;
@@ -167,9 +161,9 @@ void main() {
       await configure(country: ' ir ');
       await catalog();
       expect(sdk.calls.first.body['country'], 'IR');
-      expect(sdk.calls.first.body['sdkVersion'], '0.1.0');
+      expect(sdk.calls.first.body['sdkVersion'], '0.1.1');
       expect(sdk.calls.last.endpoint, 'offerings');
-      expect(sdk.calls.last.body['sdkVersion'], '0.1.0');
+      expect(sdk.calls.last.body['sdkVersion'], '0.1.1');
       expect(sdk.calls.last.body.containsKey('forceVersion'), false);
       expect(client.snapshot.forceVersion, null);
       expect(client.snapshot.offerings!.forceVersion, null);

@@ -30,7 +30,7 @@ Future<OfferingModel?> loadUpgradeOffering() async {
 On mobile, offerings requests use the verified session and send `appVersion`,
 `sdkVersion`, `country`, `paywallSchemaVersion: 1` and `paywallRendererVersion: 1`.
 They flush pending attributes first. Android gets its SDK version from the native
-Kotlin SDK; iOS uses the Dart V2 version. Both are `0.1.0` in this release.
+Kotlin SDK; iOS uses the Dart V2 version. Both are `0.1.1` in this release.
 These values are not inferred from a host-written synchronous SDK field. Browser
 selection and configuration are owned by the loaded JavaScript SDK; see [Web](WEB.md).
 

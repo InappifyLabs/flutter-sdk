@@ -61,10 +61,7 @@ void main() {
         );
         InappifySdkPlatform.instance = replacement;
         final loggedIn = await coordinator.login(
-          const InappifyLoginRequest(
-            apiKey: 'api-key',
-            appUserIdentifier: 'customer-1',
-          ),
+          const InappifyLoginRequest(appUserIdentifier: 'customer-1'),
         );
 
         expect(configured.isSuccess, isTrue);
@@ -144,10 +141,7 @@ void main() {
           const InappifyConfigureRequest(apiKey: 'api-key'),
         );
         final loginResult = await coordinator.login(
-          const InappifyLoginRequest(
-            apiKey: 'api-key',
-            appUserIdentifier: 'customer-1',
-          ),
+          const InappifyLoginRequest(appUserIdentifier: 'customer-1'),
         );
 
         expect(loginResult.isSuccess, isTrue);
@@ -304,10 +298,7 @@ void main() {
       InappifySdkPlatform.instance = candidate;
 
       final result = await coordinator.login(
-        const InappifyLoginRequest(
-          apiKey: 'api-key',
-          appUserIdentifier: 'customer-1',
-        ),
+        const InappifyLoginRequest(appUserIdentifier: 'customer-1'),
       );
 
       expect(result.isSuccess, isFalse);

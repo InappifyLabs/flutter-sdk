@@ -510,32 +510,23 @@ class InappifySdk {
   }
 
   /// Changes the active Inappify customer identity.
+  /// Login uses the configured session; no app key is required again.
   ///
   /// This compatibility API is implemented by Dart and the Android native
   /// backend. The Web backend returns `false` because the browser SDK accepts
   /// only [loginWithIdentityTicket] or OTP, not a stable user identifier.
-  static Future<bool> login({
-    required String apiKey,
-    required String appUserIdentifier,
-  }) async {
-    final result = await loginResult(
-      apiKey: apiKey,
-      appUserIdentifier: appUserIdentifier,
-    );
+  static Future<bool> login({required String appUserIdentifier}) async {
+    final result = await loginResult(appUserIdentifier: appUserIdentifier);
     return result.isSuccess;
   }
 
   /// Typed variant of [login]. Web callers should use Identity Ticket or OTP.
   static Future<InappifySdkResult<void>> loginResult({
-    required String apiKey,
     required String appUserIdentifier,
   }) async {
     return _record(
       await _coordinator.login(
-        InappifyLoginRequest(
-          apiKey: apiKey,
-          appUserIdentifier: appUserIdentifier,
-        ),
+        InappifyLoginRequest(appUserIdentifier: appUserIdentifier),
       ),
     );
   }

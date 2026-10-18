@@ -42,7 +42,7 @@ for success; it is not a per-purchase error slot.
 | `configure(...)` | bool projection of configure success |
 | `configureGoV2(...)` | Typed mobile configuration convenience; same default protocol, no market arguments |
 | `restoreCachedSessionResult(...)` | `InappifySdkResult<bool>`; exposed API, currently unsupported by production mobile clients and unavailable on Web |
-| `loginResult(apiKey:, appUserIdentifier:)` | Typed mobile identity change; stable-ID login is unsupported on Web |
+| `loginResult(appUserIdentifier:)` | Typed mobile identity change; stable-ID login is unsupported on Web |
 | `login(...)` | bool projection |
 | `logoutResult(cancellation:)` | Typed backend lifecycle change |
 | `logout(...)` | bool projection |

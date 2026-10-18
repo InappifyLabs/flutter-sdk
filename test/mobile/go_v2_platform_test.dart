@@ -205,7 +205,7 @@ void main() {
         'identifierValue': 'com.example.fixture',
         'versionName': '2.1.0',
         'versionCode': 21,
-        'sdkVersion': '0.1.0',
+        'sdkVersion': '0.1.1',
         'country': 'IR',
       });
       expect(transport.calls.single.bearer, 'public-fixture');
@@ -368,6 +368,18 @@ void main() {
     },
   );
 
+  test(
+    'login without configure cannot create an unauthenticated session',
+    () async {
+      final result = await client.login(
+        const InappifyLoginRequest(appUserIdentifier: customUser),
+      );
+      expect(result.isSuccess, false);
+      expect(transport.calls, isEmpty);
+      expect(store.raw, isNull);
+    },
+  );
+
   test('login changes subject and clears prior attributes/catalog', () async {
     await configure();
     await client.queueAttributes({'previous': 'value'});
@@ -375,16 +387,15 @@ void main() {
     await client.queueAttributes({'notSent': 'value'});
     transport.subject = 'new-internal-subject';
     final result = await client.login(
-      const InappifyLoginRequest(
-        apiKey: 'public-fixture',
-        appUserIdentifier: customUser,
-      ),
+      const InappifyLoginRequest(appUserIdentifier: customUser),
     );
     expect(result.isSuccess, true);
     final saved = jsonDecode(store.raw!);
     expect(saved['attributes'], null);
     expect(saved['offerings'], null);
     expect(saved['customerSubject'], 'new-internal-subject');
+    expect(transport.calls.last.body, {'appUserIdentifier': customUser});
+    expect(transport.calls.last.bearer, 'synthetic-go-token');
     expect(transport.calls.last.retry, true);
     expect(
       transport.calls.last.headers['X-Inappify-Login-Attempt'],
@@ -397,10 +408,7 @@ void main() {
     () async {
       await configure();
       await client.login(
-        const InappifyLoginRequest(
-          apiKey: 'public-fixture',
-          appUserIdentifier: customUser,
-        ),
+        const InappifyLoginRequest(appUserIdentifier: customUser),
       );
       transport.respond = (endpoint, body) async {
         if (endpoint == 'logout') {

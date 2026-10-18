@@ -11,6 +11,18 @@ import kotlinx.coroutines.Dispatchers
 
 /** Synthetic boundary tests; no Android Keystore, billing UI, or live HTTP. */
 class InappifyV2BridgeTest {
+  @Test fun loginNeedsOnlyTheCustomerIdentifierAfterConfigure() = runBlocking {
+    val fake = FakeClient()
+    val bridge = InappifyNativeBridge(InappifyNativeSession { fake.client }, hostVersion)
+    assertEquals(true, bridge.invoke("sdkConfigure", "configure", configurePayload, null)["ok"])
+    val result = bridge.invoke("sdkLogin", "login", mapOf(
+      "appUserIdentifier" to "customer-next",
+    ), null)
+    assertEquals(true, result["ok"])
+    val request = fake.arguments["login"]!!.first() as InappifyLoginRequest
+    assertEquals("customer-next", request.appUserIdentifier)
+  }
+
   @Test fun subscriptionRecoveryDefaultsAndOptOutReachNativeConfigureAndCacheRestore() = runBlocking {
     for (method in listOf("sdkConfigure", "sdkRestoreCachedSession")) {
       for (flag in listOf<Map<String, Any?>>(emptyMap(),
@@ -531,7 +543,7 @@ class InappifyV2BridgeTest {
         "syncPendingConsumablesInternal" -> InappifyResult.Success(InappifyConsumableSyncResult(
           1, 0, listOf(InappifyConsumableDelivery(55, "coins", null, if (nativeMarket == InappifyMarket.MYKET) InappifyDeliverySource.MYKET else InappifyDeliverySource.BAZAAR)),
         ), snapshot(market = nativeMarket))
-        "configure", "queueAttributes", "flushAttributes", "recover" ->
+        "configure", "login", "queueAttributes", "flushAttributes", "recover" ->
           InappifyResult.Success(Unit, snapshot(market = nativeMarket))
         "toString" -> "SyntheticClient"
         else -> error("Unexpected native call: " + method.name)
@@ -551,7 +563,7 @@ class InappifyV2BridgeTest {
     private fun snapshot(forceVersion: Long? = 1L, market: InappifyMarket = InappifyMarket.BAZAAR): InappifySnapshot = InappifySnapshot::class.java.declaredConstructors
       .first { it.parameterCount == 16 }.apply { isAccessible = true }.newInstance(
         7L, true, false, "\$INAAnonymousID:synthetic", market, "IR", "1.2.0",
-        "0.1.0", null, forceVersion, 12L, null, null, false, false, if (market == InappifyMarket.MYKET) "MyKet" else "Bazar",
+        "0.1.1", null, forceVersion, 12L, null, null, false, false, if (market == InappifyMarket.MYKET) "MyKet" else "Bazar",
       ) as InappifySnapshot
 
     private fun storePurchase(status: InappifyStorePurchaseStatus, market: InappifyMarket = InappifyMarket.BAZAAR): InappifyPurchase =

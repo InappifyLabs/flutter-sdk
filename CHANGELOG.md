@@ -1,3 +1,11 @@
+## 0.1.1
+
+- Remove `apiKey` from mobile `login`, `loginResult`, and `InappifyLoginRequest`.
+  Existing Flutter calls must drop this named argument; Configure still requires
+  the public app key. Login and renewal use the configured session and options.
+- Pin Android to Kotlin SDK `v0.1.1` and use its keyless login constructor.
+- Align the Flutter package, Dart/iOS runtime and CocoaPods metadata at `0.1.1`.
+
 ## 0.1.0
 
 - Publish the first stable release from the 0.1.0 beta series.

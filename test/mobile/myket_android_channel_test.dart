@@ -15,7 +15,7 @@ void main() {
   bool rejectPurchase = false;
 
   Map<String, Object?> snapshot() => InappifySdkSnapshot(
-    sdkVersion: '0.1.0',
+    sdkVersion: '0.1.1',
     revision: 1,
     isConfigured: true,
     market: 'myket',
@@ -117,7 +117,7 @@ void main() {
           expect(configured.isSuccess, isTrue);
           expect(configured.snapshot!.market, 'myket');
           expect(configured.snapshot!.storePlatform, 11);
-          expect(configured.snapshot!.sdkVersion, '0.1.0');
+          expect(configured.snapshot!.sdkVersion, '0.1.1');
           final payload = (calls.single.arguments as Map)['payload'] as Map;
           expect(payload['market'], 'myket');
           expect(payload['marketKey'], 'synthetic-myket-rsa');

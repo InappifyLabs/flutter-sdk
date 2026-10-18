@@ -305,10 +305,7 @@ void main() {
       } else {
         expect(
           (await client.login(
-            const InappifyLoginRequest(
-              apiKey: 'public-fixture',
-              appUserIdentifier: 'another-user',
-            ),
+            const InappifyLoginRequest(appUserIdentifier: 'another-user',),
           )).isSuccess,
           true,
         );

@@ -303,6 +303,10 @@ void main() {
     'preserves structured domain failures returned in an envelope',
     () async {
       _setHandler(channel, (call) async {
+        expect(call.method, InappifyChannelContract.login);
+        expect((call.arguments as Map)['payload'], {
+          'appUserIdentifier': 'customer-1',
+        });
         return _failureEnvelope(
           call,
           code: 'unauthorized',
@@ -312,10 +316,7 @@ void main() {
       });
 
       final result = await platform.login(
-        const InappifyLoginRequest(
-          apiKey: 'api-key',
-          appUserIdentifier: 'customer-1',
-        ),
+        const InappifyLoginRequest(appUserIdentifier: 'customer-1'),
       );
 
       expect(result.isSuccess, isFalse);

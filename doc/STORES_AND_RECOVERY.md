@@ -135,4 +135,4 @@ Bazaar's query adapter collects callback pages until a two-second idle window an
 
 Build/bridge tests validate code and protocol integration; they are not proof of live store renewal, backend ownership linkage, or fulfillment. Test the final store-specific APK with its registered package/signing identity, store account, canceled payment, interrupted verification, account changes, explicit restore, and durable consumable delivery. The host is responsible for triggering foreground recovery and committing inventory transactions.
 
-See [native recovery details](https://github.com/InappifyLabs/kotlin-sdk/blob/v0.1.0/docs/RECOVERY_AND_CACHE.md), [Flutter API](API_REFERENCE.md), and [Android integration](ANDROID.md).
+See [native recovery details](https://github.com/InappifyLabs/kotlin-sdk/blob/v0.1.1/docs/RECOVERY_AND_CACHE.md), [Flutter API](API_REFERENCE.md), and [Android integration](ANDROID.md).

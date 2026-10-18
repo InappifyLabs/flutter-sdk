@@ -5,10 +5,10 @@ On Android, Flutter calls the published Kotlin SDK through `MethodChannel`. The 
 The plugin uses this exact dependency:
 
 ```kotlin
-implementation("com.github.InappifyLabs:kotlin-sdk:v0.1.0")
+implementation("com.github.InappifyLabs:kotlin-sdk:v0.1.1")
 ```
 
-Its runtime SDK version is `0.1.0`; `v` is the Git tag prefix and is not sent as the SDK version. Do not add the old Android artifact alongside this dependency. The native package names remain `com.inappify.sdk`, and the Flutter plugin namespace remains `com.inappify.inappify_sdk`.
+Its runtime SDK version is `0.1.1`; `v` is the Git tag prefix and is not sent as the SDK version. Do not add the old Android artifact alongside this dependency. The native package names remain `com.inappify.sdk`, and the Flutter plugin namespace remains `com.inappify.inappify_sdk`.
 
 ## Build requirements and repositories
 
@@ -111,6 +111,6 @@ Customer/offerings/authentication events are forwarded on `inappify_sdk/events/v
 
 - [Native session ownership](../android/src/main/kotlin/com/inappify/inappify_sdk/InappifyClientHolder.kt), [Activity/channel lifecycle](../android/src/main/kotlin/com/inappify/inappify_sdk/InappifySdkPlugin.kt).
 - [Native delegation and strict payload parsing](../android/src/main/kotlin/com/inappify/inappify_sdk/InappifyNativeBridge.kt), [channel capabilities](../android/src/main/kotlin/com/inappify/inappify_sdk/InappifyChannelContract.kt), [result/event encoding](../android/src/main/kotlin/com/inappify/inappify_sdk/InappifyNativeCodec.kt).
-- [Published Kotlin SDK](https://github.com/InappifyLabs/kotlin-sdk/tree/v0.1.0), [native store integration](https://github.com/InappifyLabs/kotlin-sdk/blob/v0.1.0/docs/STORES.md).
+- [Published Kotlin SDK](https://github.com/InappifyLabs/kotlin-sdk/tree/v0.1.1), [native store integration](https://github.com/InappifyLabs/kotlin-sdk/blob/v0.1.1/docs/STORES.md).
 
 Automated tests validate delegation, payload types, identity/session ownership, correlation IDs, capability behavior, and result encoding. Android build checks validate the actual public native artifact. These checks do not certify a live purchase, renewal, backend deployment, or device lifecycle.

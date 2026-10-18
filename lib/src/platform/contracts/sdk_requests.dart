@@ -49,16 +49,11 @@ class InappifyConfigureRequest {
 /// Login input shared by every Inappify backend.
 @immutable
 class InappifyLoginRequest {
-  const InappifyLoginRequest({
-    required this.apiKey,
-    required this.appUserIdentifier,
-  });
+  const InappifyLoginRequest({required this.appUserIdentifier});
 
-  final String apiKey;
   final String appUserIdentifier;
 
   Map<String, Object?> toMap() => <String, Object?>{
-    'apiKey': apiKey,
     'appUserIdentifier': appUserIdentifier,
   };
 }

@@ -301,10 +301,7 @@ void main() {
       await _configure(platform);
 
       final result = await platform.login(
-        const InappifyLoginRequest(
-          apiKey: 'public-web-key',
-          appUserIdentifier: 'customer-1',
-        ),
+        const InappifyLoginRequest(appUserIdentifier: 'customer-1'),
       );
 
       expect(result.failure?.code, InappifyFailureCode.unsupportedOperation);

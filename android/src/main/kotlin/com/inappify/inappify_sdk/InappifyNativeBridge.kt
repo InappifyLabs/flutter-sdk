@@ -78,7 +78,6 @@ internal class InappifyNativeBridge(
         requestId,
         client.login(
           InappifyLoginRequest(
-            apiKey = reader.requiredString("apiKey"),
             appUserIdentifier = reader.requiredString("appUserIdentifier"),
           ),
         ),
