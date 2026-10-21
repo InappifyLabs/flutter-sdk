@@ -1,3 +1,4 @@
+import 'package:inappify_sdk/models/package_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:inappify_sdk/models/attribute.dart';
 import 'package:inappify_sdk/models/enums/market.dart';
@@ -82,6 +83,7 @@ class InappifyPurchaseRequest {
     this.lostPurchaseToken,
     this.lostPurchaseTime,
     this.productType,
+    this.packageToPurchase,
     this.dynamicPriceToken,
     this.paywallId,
     this.paywallRevision,
@@ -106,6 +108,7 @@ class InappifyPurchaseRequest {
 
   /// Omit for the native SDK's unknown in-app product classification when omitted.
   final InappifyProductType? productType;
+  final PackageModel? packageToPurchase;
   final String? dynamicPriceToken;
   final int? paywallId;
   final int? paywallRevision;
@@ -404,7 +407,13 @@ class InappifyNetworkRequest {
 /// Request used to refresh customer or offering state.
 @immutable
 class InappifyRefreshRequest {
-  const InappifyRefreshRequest({this.force = false, this.cancellation});
+  const InappifyRefreshRequest({
+    this.force = false,
+    this.cancellation,
+    this.fetchPolicy,
+  });
+
+  final InappifyCacheFetchPolicy? fetchPolicy;
 
   final bool force;
   final InappifyRequestCancellation? cancellation;

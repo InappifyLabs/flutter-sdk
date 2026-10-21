@@ -16,6 +16,9 @@ abstract final class InappifyChannelContract {
 
   /// Capability negotiation method.
   static const String handshake = 'sdkHandshake';
+  static const String setLogLevel = 'sdkSetLogLevel';
+  static const String setLogHandler = 'sdkSetLogHandler';
+  static const String logCallback = 'sdkLog';
 
   /// Session configuration method.
   static const String configure = 'sdkConfigure';
@@ -64,6 +67,13 @@ abstract final class InappifyChannelContract {
   static const String setTargetingContext = 'sdkSetTargetingContext';
 
   /// Placement-aware current-offering method.
+  static const String getOffering = 'sdkGetOffering';
+  static const String syncAttributesAndOfferingsIfNeeded =
+      'sdkSyncAttributesAndOfferingsIfNeeded';
+  static const String handleDeepLink = 'sdkHandleDeepLink';
+  static const String setConsumableDeliveryHandler =
+      'sdkSetConsumableDeliveryHandler';
+  static const String consumableDeliveryCallback = 'sdkConsumableDelivery';
   static const String getCurrentOffering = 'sdkGetCurrentOffering';
 
   /// Entitlement verification method.
@@ -94,15 +104,14 @@ abstract final class InappifyChannelContract {
   static const String getConfiguration = 'sdkGetConfiguration';
 
   static const String httpEventChannelName = 'inappify_sdk/http/v2';
-  static const String syncPurchases = 'sdkSyncPurchases';
-  static const String restorePurchases = 'sdkRestorePurchases';
+  static const String syncStorePurchases = 'sdkSyncPurchases';
+  static const String restoreStorePurchases = 'sdkRestorePurchases';
   static const String syncPendingConsumables = 'sdkSyncPendingConsumables';
   static const String confirmDelivery = 'sdkConfirmDelivery';
   static const String customerInfoWithPolicy = 'sdkV2CustomerInfo';
   static const String offeringsWithPolicy = 'sdkV2Offerings';
   static const String queueAttributes = 'sdkQueueAttributes';
   static const String flushAttributes = 'sdkFlushAttributes';
-  static const String recover = 'sdkRecover';
   static const String setNetworkEnabled = 'sdkSetNetworkEnabled';
   static const String isPaymentUrlAllowed = 'sdkIsPaymentUrlAllowed';
 

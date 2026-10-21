@@ -1,6 +1,6 @@
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:inappify_sdk/models/customer_info.dart';
 import 'package:inappify_sdk/models/offerings_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,7 +16,7 @@ class LocalStorage {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('appUserIdentifier', appUserIdentifier);
     } catch (e) {
-      debugPrint('Inappify storage write failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage write failed: ${e.runtimeType}');
     }
   }
 
@@ -25,7 +25,7 @@ class LocalStorage {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       return prefs.getString('appUserIdentifier');
     } catch (e) {
-      debugPrint('Inappify storage read failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage read failed: ${e.runtimeType}');
       return null;
     }
   }
@@ -35,7 +35,7 @@ class LocalStorage {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', token);
     } catch (e) {
-      debugPrint('Inappify storage write failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage write failed: ${e.runtimeType}');
     }
   }
 
@@ -44,7 +44,7 @@ class LocalStorage {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       return prefs.getString('token');
     } catch (e) {
-      debugPrint('Inappify storage read failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage read failed: ${e.runtimeType}');
       return null;
     }
   }
@@ -55,7 +55,7 @@ class LocalStorage {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('customerInfo', jsonEncode(customerInfo.toJson()));
     } catch (e) {
-      debugPrint('Inappify storage write failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage write failed: ${e.runtimeType}');
     }
   }
 
@@ -69,7 +69,7 @@ class LocalStorage {
 
       return null;
     } catch (e) {
-      debugPrint('Inappify storage read failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage read failed: ${e.runtimeType}');
       return null;
     }
   }
@@ -79,7 +79,7 @@ class LocalStorage {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.remove('customerInfo');
     } catch (e) {
-      debugPrint('Inappify storage clear failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage clear failed: ${e.runtimeType}');
     }
   }
 
@@ -89,7 +89,7 @@ class LocalStorage {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('offerings', jsonEncode(offerings?.toJson()));
     } catch (e) {
-      debugPrint('Inappify storage write failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage write failed: ${e.runtimeType}');
     }
   }
 
@@ -103,7 +103,7 @@ class LocalStorage {
 
       return null;
     } catch (e) {
-      debugPrint('Inappify storage read failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage read failed: ${e.runtimeType}');
       return null;
     }
   }
@@ -116,7 +116,7 @@ class LocalStorage {
         DateTime.now().toIso8601String(),
       );
     } catch (e) {
-      debugPrint('Inappify storage write failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage write failed: ${e.runtimeType}');
     }
   }
 
@@ -134,7 +134,7 @@ class LocalStorage {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setInt('forceVersion', forceVersion);
     } catch (e) {
-      debugPrint('Inappify storage write failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage write failed: ${e.runtimeType}');
     }
   }
 
@@ -149,7 +149,7 @@ class LocalStorage {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setInt('appId', appId);
     } catch (e) {
-      debugPrint('Inappify storage write failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify storage write failed: ${e.runtimeType}');
     }
   }
 

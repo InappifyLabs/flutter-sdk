@@ -1,3 +1,32 @@
+## 0.2.0
+
+- Add global RevenueCat-style log levels and custom log handlers, available before
+  Configure. Default to DEBUG during development and INFO in release. Preserve
+  filtered HTTP traces and keep secrets/bodies out of standard logs at all levels.
+  Logging failures do not alter purchase results, cache, retries or recovery.
+
+- Rename the public purchase helpers to `syncStorePurchases()` and
+  `restoreStorePurchases()`. Remove public `recover()` and its native channel
+  entry point; keep automatic native/iOS recovery, scheduling, purchase logic,
+  Direct delivery behavior and persisted cache unchanged.
+
+- Align Flutter and the Android bridge with the Kotlin public API: configure with
+  app key/optional customer, logIn/logOut, Map attributes, Package purchases,
+  placement/current/exact Offering selection and discounted payment links.
+- Forward all four CustomerInfo fetch policies, defaulting to cachedOrFetched.
+  Add read-only entitlements.all/active using the native trusted clock.
+- Forward syncAttributesAndOfferingsIfNeeded to Kotlin, including its five-call
+  rolling minute limit and existing cache/automatic refresh behavior.
+- Add bidirectional consumable delivery handlers and marked payment-return
+  forwarding, including new Android intents. Engine detach/failure never
+  acknowledges uncertain host delivery.
+- Remove obsolete public aliases, manual attribute queue controls, targeting
+  overrides, force-refresh flags and checkEntitlement. Preserve native purchase,
+  verification, recovery and persistent cache/journal formats.
+- Align the native dependency and Dart/iOS package metadata at 0.2.0.
+- Support a prebuilt local native AAR with its dependency metadata in the example
+  when the Flutter and Kotlin repositories use different Gradle toolchains.
+
 ## 0.1.1
 
 - Remove `apiKey` from mobile `login`, `loginResult`, and `InappifyLoginRequest`.

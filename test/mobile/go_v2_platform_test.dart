@@ -205,7 +205,7 @@ void main() {
         'identifierValue': 'com.example.fixture',
         'versionName': '2.1.0',
         'versionCode': 21,
-        'sdkVersion': '0.1.1',
+        'sdkVersion': '0.2.0',
         'country': 'IR',
       });
       expect(transport.calls.single.bearer, 'public-fixture');
@@ -214,7 +214,7 @@ void main() {
       expect(result.snapshot!.isAuthenticated, false);
       expect(result.snapshot!.customerInfo!.attributes, null);
       expect(
-        result.snapshot!.customerInfo!.entitlements!.single.isActive,
+        result.snapshot!.customerInfo!.entitlements.single.isActive,
         false,
       );
       expect(jsonDecode(store.raw!)['customerSubject'], 'internal-123');
@@ -292,7 +292,10 @@ void main() {
     result.snapshot!.customerInfo!.attributes = [
       Attribute(key: 'poison', value: 'value'),
     ];
-    result.snapshot!.customerInfo!.entitlements!.clear();
+    expect(
+      () => result.snapshot!.customerInfo!.entitlements.clear(),
+      throwsUnsupportedError,
+    );
     final read = await client.customerInfoWithPolicy(
       InappifyFetchPolicy.cacheOnly,
     );

@@ -1,3 +1,4 @@
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 import 'package:inappify_sdk/models/package_model.dart';
 import 'package:inappify_sdk/models/paywall.dart';
 import 'package:inappify_sdk/ui/paywall_modal.dart';
@@ -14,9 +15,11 @@ class OfferingModel {
     this.serverDescription,
     this.trialDays,
     this.metadata,
-    this.packages,
+    List<PackageModel>? packages,
     this.paywall,
-  });
+  }) : packages = packages
+           ?.map((item) => item.withOfferingIdentifier(identifier))
+           .toList(growable: false);
 
   final String? identifier;
   final bool? isDefault;
@@ -32,7 +35,7 @@ class OfferingModel {
   /// Returns true if the paywall was shown, false if no paywall is available.
   bool showPaywall(BuildContext context, {String? fontFamily}) {
     if (paywall == null) {
-      debugPrint('No paywall available for this offering');
+      SdkLogger.debug('No paywall available for this offering');
       return false;
     }
 
@@ -42,10 +45,7 @@ class OfferingModel {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        return PaywallModal(
-          paywall: paywall!,
-          fontFamily: fontFamily,
-        );
+        return PaywallModal(paywall: paywall!, fontFamily: fontFamily);
       },
     );
 

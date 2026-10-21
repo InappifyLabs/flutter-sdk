@@ -5,10 +5,10 @@ On Android, Flutter calls the published Kotlin SDK through `MethodChannel`. The 
 The plugin uses this exact dependency:
 
 ```kotlin
-implementation("com.github.InappifyLabs:kotlin-sdk:v0.1.1")
+implementation("com.github.InappifyLabs:kotlin-sdk:v0.2.0")
 ```
 
-Its runtime SDK version is `0.1.1`; `v` is the Git tag prefix and is not sent as the SDK version. Do not add the old Android artifact alongside this dependency. The native package names remain `com.inappify.sdk`, and the Flutter plugin namespace remains `com.inappify.inappify_sdk`.
+Its runtime SDK version is `0.2.0`; `v` is the Git tag prefix and is not sent as the SDK version. Do not add the old Android artifact alongside this dependency. The native package names remain `com.inappify.sdk`, and the Flutter plugin namespace remains `com.inappify.inappify_sdk`.
 
 ## Build requirements and repositories
 
@@ -29,28 +29,19 @@ Call configuration once per application startup after determining the current ac
 
 ```dart
 import 'package:inappify_sdk/inappify_sdk.dart';
-import 'package:inappify_sdk/models/enums/market.dart';
 
-Future<InappifySdkResult<void>> configureAndroidBazaar({
-  required String inappifyApiKey,
-  required String appUserId,
-  required String bazaarPublicBillingKey,
-}) {
-  return InappifySdk.configureResult(
-    apiKey: inappifyApiKey,
-    appUserIdentifier: appUserId,
-    market: Market.bazar,
-    marketKey: bazaarPublicBillingKey,
-    enableSubscriptionRecoveryWithoutPayload: true,
-  );
-}
+Future<InappifySdkResult<void>> configureAndroid({
+  required String inappifyApiKey, String? appUserId,
+}) => InappifySdk.configureResult(
+  apiKey: inappifyApiKey, appUserIdentifier: appUserId,
+);
 ```
 
-`apiKey` initializes or renews the native session. Store/commerce requests authenticate with `Authorization: Bearer <current sessionToken>`; the API key and a legacy customer token are not sent in commerce bodies. `marketKey` is the store application's public RSA billing key, not a private key or session token. The server session's `storePlatform` determines the actual purchase route, and its store metadata may supply the public billing key.
+`apiKey` initializes or renews the native session. Store/commerce requests authenticate with `Authorization: Bearer <current sessionToken>`; the API key and a legacy customer token are not sent in commerce bodies. The verified server session supplies the store route and public RSA billing key; neither is a Configure argument.
 
 Omitting `appUserIdentifier` can reuse the persisted native identity, including a signed-in customer. It is not an instruction to log out. Resolve your own application's identity before configuration, and use explicit login/logout for account transitions. Pending native paid operations remain bound to their original app/customer/store context.
 
-Configuration can reuse a matching verified native cache and schedules recovery in the background. A successful configure result does not mean that all recovery or purchase verification has completed. The plugin does not create a periodic worker or automatically invoke recovery on every app resume. Call `InappifySdk.recover()` from your host lifecycle when foregrounding or restoring connectivity; see [store recovery](STORES_AND_RECOVERY.md).
+Configuration can reuse a matching verified native cache and schedules recovery in the background. A successful configure result does not mean that all recovery or purchase verification has completed. The native SDK observes foreground and restored connectivity automatically, with pending-work/five-minute checks and thirty-second failure backoff. Recovery is internal; no host lifecycle call is required. It does not create a periodic worker; see [store recovery](STORES_AND_RECOVERY.md).
 
 `restoreCachedSessionResult` remains a source-compatible optional API, but the production Android V2 client does not implement explicit cache restoration. Android does not advertise that capability and returns `unsupportedOperation`. Use `configureResult` and the supported fetch policies instead. There is no silent Dart/network fallback for this optional method.
 
@@ -93,14 +84,14 @@ The handshake selects one backend for the whole session. Android supports the fo
 
 | Dart operation | Native action |
 | --- | --- |
-| `configureResult`, `loginResult`, `logoutResult` | V2 session configuration and identity transitions |
+| `configureResult`, `logInResult`, `logOutResult` | V2 session configuration and identity transitions |
 | `purchaseResult` | Native server-selected checkout/store billing and durable verification |
 | `getCustomerInfoResult`, `getOfferingsResult` | Native cached/network resource fetches |
 | `customerInfoWithPolicy`, `offeringsWithPolicy` | Native `cacheOnly`, `cacheFirst`, `networkFirst`, or `networkOnly` fetch |
-| `setTargetingContextResult`, `getCurrentOfferingResult`, `checkEntitlementResult` | Native context update, server-selected offering projection, verified entitlement lookup |
-| Attribute methods, `queueAttributes`, `flushAttributes` | Native write queue and synchronization |
-| `syncPurchases`, `restorePurchases`, `recover` | Native owned inventory and paid-operation reconciliation |
-| `syncPendingConsumables`, `confirmDelivery` | Verified delivery queue, durable host acknowledgement, consumption/reporting |
+| `getCurrentOfferingResult`, `getOfferingResult`, `syncAttributesAndOfferingsIfNeeded` | Native selection and bounded attribute/Offering refresh |
+| `setAttributes`, reserved setters | Existing native write queue and synchronization |
+| `syncStorePurchases`, `restoreStorePurchases` | Native owned inventory and paid-operation reconciliation |
+| `setConsumableDeliveryHandler`, `syncPendingConsumables`, `confirmDelivery` | Verified delivery queue, durable host acknowledgement, consumption/reporting |
 | `setNetworkEnabled`, `isPaymentUrlAllowed`, `getConfiguration` | Native network gate, checkout URL allowlist, token-free configuration |
 
 Identity Ticket/OTP, `createCheckout`, checkout polling, and browser payment-return methods are not available through this Android bridge. The existing native direct purchase flow can return a server checkout URL, which the host navigates to; do not substitute unsupported browser APIs for Android purchase.
@@ -111,6 +102,42 @@ Customer/offerings/authentication events are forwarded on `inappify_sdk/events/v
 
 - [Native session ownership](../android/src/main/kotlin/com/inappify/inappify_sdk/InappifyClientHolder.kt), [Activity/channel lifecycle](../android/src/main/kotlin/com/inappify/inappify_sdk/InappifySdkPlugin.kt).
 - [Native delegation and strict payload parsing](../android/src/main/kotlin/com/inappify/inappify_sdk/InappifyNativeBridge.kt), [channel capabilities](../android/src/main/kotlin/com/inappify/inappify_sdk/InappifyChannelContract.kt), [result/event encoding](../android/src/main/kotlin/com/inappify/inappify_sdk/InappifyNativeCodec.kt).
-- [Published Kotlin SDK](https://github.com/InappifyLabs/kotlin-sdk/tree/v0.1.1), [native store integration](https://github.com/InappifyLabs/kotlin-sdk/blob/v0.1.1/docs/STORES.md).
+- [Published Kotlin SDK](https://github.com/InappifyLabs/kotlin-sdk/tree/v0.2.0), [native store integration](https://github.com/InappifyLabs/kotlin-sdk/blob/v0.2.0/docs/STORES.md).
 
 Automated tests validate delegation, payload types, identity/session ownership, correlation IDs, capability behavior, and result encoding. Android build checks validate the actual public native artifact. These checks do not certify a live purchase, renewal, backend deployment, or device lifecycle.
+
+## Develop against the current Kotlin checkout
+
+The next native artifact must be published before normal remote builds. When the
+native checkout and Flutter use different Gradle/Kotlin versions, build the native
+SDK with its own wrapper and use a local Maven directory in the example:
+
+```sh
+flutter build apk --release --android-project-arg=inappifyKotlinSdkRepository=/absolute/path/to/local-native-repository
+```
+
+The directory must contain `com/github/InappifyLabs/kotlin-sdk/v0.2.0/` with
+`kotlin-sdk-v0.2.0.aar` from the native release build and a matching POM. Use the
+dependencies generated by `:sdk:generatePomFileForReleasePublication`; preserve
+them when mapping the local POM's coordinates to `com.github.InappifyLabs:kotlin-sdk:v0.2.0`.
+A POM-only local copy must omit the generated Gradle module metadata marker.
+The property restricts this module to the local directory and leaves normal remote
+builds unchanged. It does not upload or publish anything.
+
+For compatible Gradle/Kotlin toolchains, the example also supports a property
+pointing directly at the current native repository:
+
+```properties
+inappifyKotlinSdkPath=D:/Development/paywall/KotlinSDK
+```
+
+Add it to your development Gradle properties and use the example's conditional
+includeBuild/dependency substitution from settings.gradle.kts. Other host apps can
+copy that block. Do not combine it with `inappifyKotlinSdkRepository`. This does not
+publish an artifact or change the remote dependency. The current Kotlin 1.9 native
+checkout cannot use this composite mode inside the example's Gradle 9 build.
+
+The bridge requires the new capability set; an old native 0.1.1 plugin is rejected
+rather than selected for an incomplete session. Kotlin owns the combined sync quota,
+automatic timers/lifecycle policy and cache. Flutter forwards initial/new intents
+through native marker validation without consuming application navigation.

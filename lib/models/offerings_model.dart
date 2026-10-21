@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 import 'package:inappify_sdk/models/offering_model.dart';
 import 'package:inappify_sdk/models/rule.dart';
 import 'package:inappify_sdk/offering_evaluation_context.dart';
@@ -49,6 +49,18 @@ class OfferingsModel {
       });
   Map<String, dynamic> toJson() => _$OfferingsModelToJson(this);
 
+  Map<String, OfferingModel> get all => Map.unmodifiable({
+    for (final offering in offerings ?? <OfferingModel>[])
+      if (offering.identifier != null) offering.identifier!: offering,
+  });
+  OfferingModel? getOffering(String identifier) => all[identifier];
+  OfferingModel? get current => getCurrentOfferingForPlacement(null);
+  OfferingModel? getCurrentOfferingForPlacement(String? placementIdentifier) =>
+      resolveOffering(
+        placement: placementIdentifier,
+        evaluationContext: createLegacyOfferingEvaluationContext(),
+      );
+
   /// Returns the offering marked as the server default.
   ///
   /// This retains the historical `firstWhere` behavior: a non-null offering
@@ -97,7 +109,7 @@ class OfferingsModel {
         context: evaluationContext,
       );
     } catch (error) {
-      debugPrint('Inappify offering resolution failed: ${error.runtimeType}');
+      SdkLogger.error('Inappify offering resolution failed: ${error.runtimeType}');
       return null;
     }
   }

@@ -1,3 +1,4 @@
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 // lib/helpers/paywall_assets_helper.dart
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -233,12 +234,12 @@ class PaywallAssetsHelper {
     final cachedPath =
         await PaywallAssetsDownloader.getLocalAssetPath(asset!.url!);
     if (cachedPath != null) {
-      debugPrint('Using cached paywall asset.');
+      SdkLogger.debug('Using cached paywall asset.');
       return cachedPath;
     }
 
     // Fallback to original URL
-    debugPrint('Using remote paywall asset.');
+    SdkLogger.debug('Using remote paywall asset.');
     return asset.url;
   }
 

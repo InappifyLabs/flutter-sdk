@@ -1,5 +1,5 @@
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 // lib/paywall_builder/paywall_widget_parser.dart
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:inappify_sdk/helpers/paywall_assets_helper.dart';
@@ -17,9 +17,9 @@ import 'package:inappify_sdk/models/paywall_asset.dart';
 import 'package:inappify_sdk/ui/paywall_pacakges.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Emits verbose paywall diagnostics only in debug builds.
+/// Emits structural diagnostics without localized text, URLs or dynamic values.
 void _debugPaywallParserLog(String message) {
-  if (kDebugMode) debugPrint(message);
+  SdkLogger.verbose('Paywall rendering event.');
 }
 
 class PaywallWidgetParser {

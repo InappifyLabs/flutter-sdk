@@ -38,48 +38,44 @@ class _Platform extends InappifySdkPlatform {
 }
 
 void main() {
-  test('public configure and cached restore preserve recovery defaults and opt-out', () async {
-    final original = InappifySdkPlatform.instance;
-    final platform = _Platform();
-    InappifySdkPlatform.instance = platform;
-    try {
-      expect(await InappifySdk.configure(apiKey: 'fixture-key'), isTrue);
-      expect(
-        await InappifySdk.configure(
-          apiKey: 'fixture-key',
-          enableSubscriptionRecoveryWithoutPayload: false,
-        ),
-        isTrue,
-      );
-      expect(
-        (await InappifySdk.configureResult(
-          apiKey: 'fixture-key',
-          enableSubscriptionRecoveryWithoutPayload: false,
-        )).isSuccess,
-        isTrue,
-      );
-      expect(
-        (await InappifySdk.restoreCachedSessionResult(
-          apiKey: 'fixture-key',
-          enableSubscriptionRecoveryWithoutPayload: false,
-        )).data,
-        isTrue,
-      );
-      expect(
-        (await InappifySdk.configureGoV2(
-          apiKey: 'fixture-key',
-          enableSubscriptionRecoveryWithoutPayload: false,
-        )).isSuccess,
-        isTrue,
-      );
-      expect(
-        platform.requests.map(
-          (request) => request.enableSubscriptionRecoveryWithoutPayload,
-        ),
-        [true, false, false, false, false],
-      );
-    } finally {
-      InappifySdkPlatform.instance = original;
-    }
-  });
+  test(
+    'configure accepts only app key and optional customer; recovery stays enabled',
+    () async {
+      final original = InappifySdkPlatform.instance;
+      final platform = _Platform();
+      InappifySdkPlatform.instance = platform;
+      try {
+        expect(await InappifySdk.configure(apiKey: 'fixture-key'), isTrue);
+        expect(
+          (await InappifySdk.configureResult(
+            apiKey: 'fixture-key',
+            appUserIdentifier: 'customer-1',
+          )).isSuccess,
+          isTrue,
+        );
+        expect(platform.requests.map((r) => r.appUserIdentifier), [
+          null,
+          'customer-1',
+        ]);
+        expect(
+          platform.requests.every(
+            (r) => r.enableSubscriptionRecoveryWithoutPayload,
+          ),
+          isTrue,
+        );
+        expect(
+          platform.requests.every(
+            (r) =>
+                r.market == null &&
+                r.marketKey == null &&
+                r.country == null &&
+                r.appVersion == null,
+          ),
+          isTrue,
+        );
+      } finally {
+        InappifySdkPlatform.instance = original;
+      }
+    },
+  );
 }

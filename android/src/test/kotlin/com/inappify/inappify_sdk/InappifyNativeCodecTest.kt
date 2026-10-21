@@ -20,17 +20,21 @@ internal class InappifyNativeCodecTest {
   @Test
   fun serverOfferingSelectionSurvivesTheNativeBridge() {
     // Construct the SDK's immutable server model without exposing an extra SDK factory.
-    val constructor = com.inappify.sdk.InappifyOfferings::class.java.declaredConstructors
-      .single { it.parameterCount == 7 }.apply { isAccessible = true }
-    val value = constructor.newInstance(
+    val constructors = com.inappify.sdk.InappifyOfferings::class.java.declaredConstructors
+    val current = constructors.firstOrNull { it.parameterCount == 6 && it.parameterTypes.last() == Boolean::class.javaPrimitiveType }
+    val constructor = current ?: constructors.single { it.parameterCount == 7 && it.parameterTypes.last() == Boolean::class.javaPrimitiveType }
+    val values = mutableListOf<Any?>(
       listOf(InappifyOffering(identifier = "default", isDefault = true),
         InappifyOffering(identifier = "family")),
-      null, null, null, "family", mapOf("home" to "family", "empty" to null), true,
-    ) as com.inappify.sdk.InappifyOfferings
+      null, null, "family", mapOf("home" to "family", "empty" to null), true,
+    )
+    if (current == null) values.add(2, 77L)
+    val value = constructor.apply { isAccessible = true }.newInstance(*values.toTypedArray()) as com.inappify.sdk.InappifyOfferings
     val encoded = InappifyNativeCodec.offerings(value)
     assertEquals("family", encoded["currentOffering"])
     assertEquals(mapOf("home" to "family", "empty" to null), encoded["placements"])
     assertEquals(true, encoded["usesServerTargeting"])
+    assertEquals(null, encoded["forceVersion"])
   }
 
   @Test
@@ -112,7 +116,7 @@ internal class InappifyNativeCodecTest {
         ),
         "hasUsedTrial" to true,
       ),
-      InappifyNativeCodec.customerInfo(customer),
+      InappifyNativeCodec.customerInfo(customer).filterKeys { it != "entitlementEvaluationTimeMillis" },
     )
   }
 
@@ -178,12 +182,14 @@ internal class InappifyNativeCodecTest {
           linkedMapOf(
             "identifier" to "monthly-package",
             "packageType" to 2L,
+            "offeringIdentifier" to "main",
             "description" to "Monthly access",
             "entitlement" to "premium",
             "name" to "Monthly",
             "discountPercent" to 25L,
             "product" to linkedMapOf(
               "identifier" to "monthly-product",
+              "productType" to null,
               "name" to "Premium Monthly",
               "prices" to listOf(
                 linkedMapOf(

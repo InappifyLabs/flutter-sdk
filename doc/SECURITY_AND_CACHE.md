@@ -26,7 +26,7 @@ This guarantee applies to CustomerInfo and signed scope. It does not sign every 
 | iOS | Dart V2 client / Swift companion | Atomic bounded JSON value in non-synchronizing, device-only Keychain account `goV2` |
 | Web | External JavaScript SDK | Provider-owned browser persistence; inspect `snapshot.persistenceMode` |
 
-Android encryption details and journal boundaries are documented in the [Kotlin security guide](https://github.com/InappifyLabs/kotlin-sdk/blob/v0.1.1/docs/SECURITY_AND_DIAGNOSTICS.md). iOS Keychain uses `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`; it does not silently substitute SharedPreferences if Keychain fails. The package's old preference helper is not the production mobile V2 session store. Neither at-rest protection nor browser storage makes a compromised application process trustworthy.
+Android encryption details and journal boundaries are documented in the [Kotlin security guide](https://github.com/InappifyLabs/kotlin-sdk/blob/v0.2.0/docs/SECURITY_AND_DIAGNOSTICS.md). iOS Keychain uses `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`; it does not silently substitute SharedPreferences if Keychain fails. The package's old preference helper is not the production mobile V2 session store. Neither at-rest protection nor browser storage makes a compromised application process trustworthy.
 
 Mobile Configure binds saved state to app configuration and validates the stored signed customer/session scope before exposing it. Pending login/logout state hides the previous public customer until reconciliation. Commerce journals are account/endpoint bound; do not move a checkpoint to another account or clear it to force a second payment. Use Configure for the selected known user, then `loginResult` / `logoutResult` as the application identity changes.
 
@@ -43,7 +43,13 @@ Android and iOS expose `customerInfoWithPolicy` and `offeringsWithPolicy`:
 | `networkFirst` | Try network, then retained same-customer cache if available |
 | `networkOnly` | Require the network result |
 
-`getCustomerInfoResult(forceRefresh: false)` and `getOfferingsResult(forceRefresh: false)` use `cacheFirst`; `true` uses `networkOnly`. There is no fixed five-minute freshness guarantee in these production mobile implementations. Concurrent compatible network requests can share work; a cache-only caller does not become a network caller merely because another request is in flight.
+Android `getCustomerInfoResult()` defaults to `cachedOrFetched`: cached data is
+returned immediately, with stale data refreshed in the background. Use
+`InappifyCacheFetchPolicy.fetchCurrent` to wait for server data. Freshness is five
+minutes foreground / twenty-five hours background. `getOfferingsResult()` uses
+native automatic cache refresh; manual refresh is
+`syncAttributesAndOfferingsIfNeeded()`. Advanced cache/network policies above
+remain available; iOS retains its independent Dart cache implementation.
 
 ```dart
 import 'package:inappify_sdk/inappify_sdk.dart';
@@ -63,11 +69,11 @@ Future<bool> readCachedEntitlement(String identifier) async {
 
 Stored CustomerInfo remains signature/scope checked, but the clients may retain an expired signed envelope for offline use. Entitlement expiry is checked against a trusted time floor learned from signed request dates. Define the application's offline access policy explicitly; cache is not proof of current server authorization or a newly completed purchase. Read-only snapshots and returned model instances do not replace an authoritative refresh when freshness matters.
 
-Call mobile `recover()` when foregrounding, reconnecting or returning from a Direct checkout. Android also reconciles selected marketplace inventory after Configure; iOS reconciles Direct delivery state and does not query stores. The Flutter package does not install a foreground observer for your application. `setNetworkEnabled(false)` prevents subsequent mobile SDK/commerce network use while preserving state; it is not a device firewall or marketplace disconnect API. Web uses its own session and checkout methods instead.
+Recovery is internal. Android reconciles selected marketplace inventory after Configure and automatically observes foreground/reconnect and marked payment returns. The iOS adapter retains its Direct startup recovery and does not query stores or install Android lifecycle observers. For an explicit check, use `syncStorePurchases()` on the store route, or fresh CustomerInfo and `syncPendingConsumables()` for Direct deliveries. `setNetworkEnabled(false)` prevents subsequent mobile SDK/commerce network use while preserving state; it is not a device firewall or marketplace disconnect API. Web uses its own session and checkout methods instead.
 
 ## Attributes and targeting
 
-Mobile V2 attributes are write-only. Their values are removed from public verified CustomerInfo rather than exposed as readback. `queueAttributes` persists validated writes, and `flushAttributes` synchronizes them with the current session. Null or empty values request deletion; whitespace is a value. Invalid names/values fail rather than being silently accepted. Pending/rejected values may remain in account-bound recovery state.
+Mobile V2 attributes are write-only. Their values are removed from public verified CustomerInfo rather than exposed as readback. `setAttributes(Map)` persists and synchronizes validated writes through the existing queue. Android `syncAttributesAndOfferingsIfNeeded()` flushes pending attributes before refreshing offerings. Null or empty values request deletion; whitespace is a value. Invalid names/values fail rather than being silently accepted. Pending/rejected values may remain in account-bound recovery state.
 
 Synchronize attributes and targeting context before fetching the targeted offering. Mobile `getCurrentOffering` resolves the server's placement selection, then `currentOffering`, then a default offering; it does not reevaluate old local rules. A cached offering can reflect older attributes/context. The Web adapter delegates selection and attribute operations to its provider.
 
@@ -93,7 +99,7 @@ Compatibility methods return `false` or `null` on failure and update process-wid
 
 ## Opt-in HTTP diagnostics
 
-Subscribe before Configure to observe filtered mobile Inappify traffic. HTTP logging is not enabled merely because the host is a debug build:
+Subscribe before Configure to observe filtered mobile Inappify traffic. Detailed HTTP trace delivery remains opt-in even when standard DEBUG messages are enabled:
 
 ```dart
 import 'dart:async';
@@ -123,3 +129,28 @@ Web does not emit mobile HTTP traces. Use its typed checkout/customer results, l
 - [Channel validation](../lib/src/platform/channel/channel_codec.dart), [failure categories](../lib/src/platform/contracts/sdk_failure.dart)
 - [iOS protocol/signing](../lib/src/platform/mobile/go_v2_protocol.dart), [iOS transport/filtering](../lib/src/platform/mobile/go_v2_infrastructure.dart)
 - [Swift Keychain](../ios/Classes/InappifySdkPlugin.swift), [Web state/error handling](../lib/src/platform/web/web_inappify_platform.dart)
+
+## SDK log levels and custom handling
+
+```dart
+await InappifySdk.setLogLevel(InappifyLogLevel.debug);
+await InappifySdk.setLogHandler((level, message) {
+  // Receive filtered messages instead of the default console output.
+});
+// Remove the custom callback and restore normal console output.
+await InappifySdk.setLogHandler(null);
+```
+
+Set these before Configure to include initialization. Defaults are debug in
+development and info in release/profile builds. Levels are verbose, debug, info,
+warn and error, each including more severe messages. Kotlin uses Logcat;
+iOS/Dart uses its console. Native Android events are forwarded once to the
+Flutter handler. Installing or removing a handler preserves consumable delivery
+callbacks; engine detach removes its native logging registration. Handler errors
+are isolated from SDK operations. No logs are automatically uploaded.
+
+Standard logs contain structural events and network status, never HTTP bodies,
+credentials, customer or attribute values, or store receipts. Paywall verbose
+messages omit localized/dynamic text. The HTTP diagnostic stream above retains
+its existing filtering, limits and opt-in behavior. Web logging controls the
+Flutter wrapper; the JavaScript provider's own logging remains host-owned.

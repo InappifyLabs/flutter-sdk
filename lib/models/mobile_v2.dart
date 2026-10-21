@@ -3,6 +3,21 @@ import 'package:flutter/foundation.dart';
 /// Mobile backend selection. Upgrading the package never switches protocols.
 enum InappifyMobileProtocol { goV2 }
 
+/// CustomerInfo cache policy; cachedOrFetched is the default.
+enum InappifyCacheFetchPolicy {
+  cacheOnly,
+  fetchCurrent,
+  notStaleCachedOrCurrent,
+  cachedOrFetched,
+}
+
+enum InappifyDeliveryResult { delivered, retryLater }
+
+typedef InappifyConsumableDeliveryHandler =
+    Future<InappifyDeliveryResult> Function(
+      InappifyConsumableDelivery delivery,
+    );
+
 enum InappifyFetchPolicy { cacheOnly, cacheFirst, networkFirst, networkOnly }
 
 enum InappifyProductType {

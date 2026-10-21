@@ -24,3 +24,12 @@ plugins {
 }
 
 include(":app")
+
+// Optional development checkout; consumers resolve the coordinated published version.
+providers.gradleProperty("inappifyKotlinSdkPath").orNull?.let { sourcePath ->
+    includeBuild(sourcePath) {
+        dependencySubstitution {
+            substitute(module("com.github.InappifyLabs:kotlin-sdk")).using(project(":sdk"))
+        }
+    }
+}

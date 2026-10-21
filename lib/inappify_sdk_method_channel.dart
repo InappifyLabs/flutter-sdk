@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:inappify_sdk/src/platform/channel/native_callbacks.dart';
 import 'package:inappify_sdk/inappify_sdk_platform_interface.dart'
     show InappifySdkPlatform;
 import 'package:inappify_sdk/models/attribute.dart';
@@ -68,9 +69,9 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
       });
 
   @override
-  Future<InappifySdkResult<List<PurchaseResult>>> syncPurchases() =>
+  Future<InappifySdkResult<List<PurchaseResult>>> syncStorePurchases() =>
       _invokeResult(
-        method: InappifyChannelContract.syncPurchases,
+        method: InappifyChannelContract.syncStorePurchases,
         payload: const {},
         decodeData: (map) {
           final purchases = map['purchases'];
@@ -89,9 +90,9 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
       );
 
   @override
-  Future<InappifySdkResult<InappifyRestoreResult>> restorePurchases() =>
+  Future<InappifySdkResult<InappifyRestoreResult>> restoreStorePurchases() =>
       _invokeResult(
-        method: InappifyChannelContract.restorePurchases,
+        method: InappifyChannelContract.restoreStorePurchases,
         payload: const {},
         decodeData: InappifyRestoreResult.fromMap,
       );
@@ -126,21 +127,6 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
     decodeData: OfferingsModel.fromJson,
   );
   @override
-  Future<InappifySdkResult<void>> queueAttributes(
-    Map<String, String?> values,
-  ) => _invokeResult(
-    method: InappifyChannelContract.queueAttributes,
-    payload: {'values': values},
-  );
-  @override
-  Future<InappifySdkResult<void>> flushAttributes() => _invokeResult(
-    method: InappifyChannelContract.flushAttributes,
-    payload: const {},
-  );
-  @override
-  Future<InappifySdkResult<void>> recover() =>
-      _invokeResult(method: InappifyChannelContract.recover, payload: const {});
-  @override
   Future<InappifySdkResult<void>> setNetworkEnabled(bool enabled) =>
       _invokeResult(
         method: InappifyChannelContract.setNetworkEnabled,
@@ -153,6 +139,53 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
         payload: {'url': url},
         decodeData: _decodeBoolean,
       );
+
+  @override
+  Future<InappifySdkResult<OfferingModel>> getOffering(String identifier) =>
+      _invokeResult(
+        method: InappifyChannelContract.getOffering,
+        payload: {'identifier': identifier},
+        decodeData: OfferingModel.fromJson,
+        allowMissingData: true,
+      );
+  @override
+  Future<InappifySdkResult<OfferingsModel>>
+  syncAttributesAndOfferingsIfNeeded() => _invokeResult(
+    method: InappifyChannelContract.syncAttributesAndOfferingsIfNeeded,
+    payload: const {},
+    decodeData: OfferingsModel.fromJson,
+  );
+  @override
+  Future<InappifySdkResult<bool>> handleDeepLink(String url) => _invokeResult(
+    method: InappifyChannelContract.handleDeepLink,
+    payload: {'url': url},
+    decodeData: _decodeBoolean,
+  );
+  InappifyConsumableDeliveryHandler? _deliveryHandler;
+  @override
+  Future<InappifySdkResult<void>> setConsumableDeliveryHandler(
+    InappifyConsumableDeliveryHandler? handler,
+  ) async {
+    final previous = _deliveryHandler;
+    _deliveryHandler = handler;
+    NativeCallbacks.install(methodChannel);
+    NativeCallbacks.delivery = (call) async {
+      final selected = _deliveryHandler;
+      if (selected == null) return InappifyDeliveryResult.retryLater.name;
+      try {
+        final data = Map<String, dynamic>.from(call.arguments as Map);
+        return (await selected(InappifyConsumableDelivery.fromMap(data))).name;
+      } catch (_) {
+        return InappifyDeliveryResult.retryLater.name;
+      }
+    };
+    final result = await _invokeResult<void>(
+      method: InappifyChannelContract.setConsumableDeliveryHandler,
+      payload: {'enabled': handler != null},
+    );
+    if (!result.isSuccess) _deliveryHandler = previous;
+    return result;
+  }
 
   final String Function()? _requestIdGenerator;
   int _requestCounter = 0;
@@ -217,18 +250,12 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
   Future<InappifySdkResult<void>> configure(InappifyConfigureRequest request) {
     return _invokeResult<void>(
       method: InappifyChannelContract.configure,
-      payload: request.toMap(),
+      payload: {
+        'apiKey': request.apiKey,
+        'appUserIdentifier': request.appUserIdentifier,
+      },
     );
   }
-
-  @override
-  Future<InappifySdkResult<bool>> restoreCachedSession(
-    InappifyConfigureRequest request,
-  ) => _invokeResult<bool>(
-    method: InappifyChannelContract.restoreCachedSession,
-    payload: request.toMap(),
-    decodeData: _decodeBoolean,
-  );
 
   @override
   Future<InappifySdkResult<void>> login(InappifyLoginRequest request) {
@@ -295,7 +322,29 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
   ) {
     return _invokeResult<PurchaseResult>(
       method: InappifyChannelContract.purchase,
-      payload: request.toMap(),
+      payload: {
+        'packageToPurchase': {
+          'identifier':
+              request.packageToPurchase?.identifier ??
+              request.packageIdentifier,
+          'offeringIdentifier':
+              request.packageToPurchase?.offeringIdentifier ??
+              request.offeringIdentifier,
+          'product': {
+            'identifier':
+                request.packageToPurchase?.product?.identifier ??
+                request.productIdentifier,
+            'productType':
+                (request.packageToPurchase?.product?.productType ??
+                        request.productType)
+                    ?.wireName,
+          },
+        },
+        'idempotencyKey': request.idempotencyKey,
+        if (request.paywallId != null) 'paywallId': request.paywallId,
+        if (request.paywallRevision != null)
+          'paywallRevision': request.paywallRevision,
+      },
       requestId: request.idempotencyKey,
       decodeData: PurchaseResult.fromJson,
     );
@@ -330,7 +379,7 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
   ) {
     return _invokeResult<ValidateDiscountCodeData>(
       method: InappifyChannelContract.validateDiscountCode,
-      payload: request.toMap(),
+      payload: {'discountCode': request.discountCode},
       decodeData: ValidateDiscountCodeData.fromJson,
     );
   }
@@ -341,7 +390,14 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
   ) {
     return _invokeResult<CustomerInfo>(
       method: InappifyChannelContract.getCustomerInfo,
-      payload: request.toMap(),
+      payload: {
+        'fetchPolicy':
+            (request.fetchPolicy ??
+                    (request.force
+                        ? InappifyCacheFetchPolicy.fetchCurrent
+                        : InappifyCacheFetchPolicy.cachedOrFetched))
+                .name,
+      },
       decodeData: CustomerInfo.fromJson,
     );
   }
@@ -361,18 +417,8 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
   ) {
     return _invokeResult<OfferingsModel>(
       method: InappifyChannelContract.getOfferings,
-      payload: request.toMap(),
+      payload: const {},
       decodeData: OfferingsModel.fromJson,
-    );
-  }
-
-  @override
-  Future<InappifySdkResult<void>> setTargetingContext(
-    InappifyTargetingContextRequest request,
-  ) {
-    return _invokeResult<void>(
-      method: InappifyChannelContract.setTargetingContext,
-      payload: request.toMap(),
     );
   }
 
@@ -382,20 +428,9 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
   ) {
     return _invokeResult<OfferingModel>(
       method: InappifyChannelContract.getCurrentOffering,
-      payload: request.toMap(),
+      payload: {'placementIdentifier': request.placementIdentifier},
       decodeData: OfferingModel.fromJson,
       allowMissingData: true,
-    );
-  }
-
-  @override
-  Future<InappifySdkResult<bool>> checkEntitlement(
-    InappifyEntitlementCheckRequest request,
-  ) {
-    return _invokeResult<bool>(
-      method: InappifyChannelContract.checkEntitlement,
-      payload: request.toMap(),
-      decodeData: _decodeBoolean,
     );
   }
 
@@ -405,18 +440,11 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
   ) {
     return _invokeResult<List<Attribute>>(
       method: InappifyChannelContract.setAttributes,
-      payload: request.toMap(),
-      decodeData: _decodeAttributes,
-    );
-  }
-
-  @override
-  Future<InappifySdkResult<List<Attribute>>> deleteAttributes(
-    InappifyDeleteAttributesRequest request,
-  ) {
-    return _invokeResult<List<Attribute>>(
-      method: InappifyChannelContract.deleteAttributes,
-      payload: request.toMap(),
+      payload: {
+        'attributes': {
+          for (final value in request.attributes) value.key!: value.value,
+        },
+      },
       decodeData: _decodeAttributes,
     );
   }
@@ -428,26 +456,6 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
     return _invokeResult<void>(
       method: InappifyChannelContract.setReservedAttribute,
       payload: request.toMap(),
-    );
-  }
-
-  @override
-  Future<InappifySdkResult<List<Attribute>>> syncAttributes() {
-    return _invokeResult<List<Attribute>>(
-      method: InappifyChannelContract.syncAttributes,
-      payload: const <String, Object?>{},
-      decodeData: _decodeAttributes,
-    );
-  }
-
-  @override
-  Future<InappifySdkResult<List<Attribute>>> syncAttributeValues(
-    InappifyAttributesRequest request,
-  ) {
-    return _invokeResult<List<Attribute>>(
-      method: InappifyChannelContract.syncAttributeValues,
-      payload: request.toMap(),
-      decodeData: _decodeAttributes,
     );
   }
 

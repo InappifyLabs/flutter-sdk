@@ -1,14 +1,14 @@
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 // lib/helpers/localization_helper.dart
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:inappify_sdk/models/paywall_localization.dart';
 import 'package:inappify_sdk/models/offering_packages.dart';
 import 'package:inappify_sdk/models/offering_packages_product.dart';
 import 'package:collection/collection.dart'; // For firstWhereOrNull
 
-/// Emits verbose paywall diagnostics only in debug builds.
+/// Emits structural diagnostics without localized text, URLs or dynamic values.
 void _debugLocalizationLog(String message) {
-  if (kDebugMode) debugPrint(message);
+  SdkLogger.verbose('Paywall localization event.');
 }
 
 /// A helper class for resolving localized strings and dynamic tags.

@@ -1,5 +1,17 @@
 allprojects {
     repositories {
+        // Use an already built native SDK without sharing incompatible Gradle toolchains.
+        providers.gradleProperty("inappifyKotlinSdkRepository").orNull?.let { repositoryPath ->
+            exclusiveContent {
+                forRepository {
+                    maven {
+                        name = "LocalInappifyKotlinSdk"
+                        url = uri(repositoryPath)
+                    }
+                }
+                filter { includeModule("com.github.InappifyLabs", "kotlin-sdk") }
+            }
+        }
         google()
         mavenCentral()
         maven { url = uri("https://jitpack.io") }

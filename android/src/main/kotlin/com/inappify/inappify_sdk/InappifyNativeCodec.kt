@@ -140,7 +140,7 @@ internal object InappifyNativeCodec {
     "customerInfo" to value.customerInfo?.let(::customerInfo),
     "offerings" to value.offerings?.let(::offerings),
     "storeInfo" to value.storeInfo,
-    "forceVersion" to value.forceVersion,
+    "forceVersion" to null, // Existing snapshot wire key; ignored by the current native SDK.
     "appId" to value.appId,
     "country" to (value.country ?: DEFAULT_COUNTRY),
     "versionName" to hostVersion.versionName,
@@ -168,7 +168,8 @@ internal object InappifyNativeCodec {
     "firstSeen" to value.firstSeen,
     "requestDate" to value.requestDate,
     "latestExpirationDate" to value.latestExpirationDate,
-    "entitlements" to value.entitlements?.map(::entitlement),
+    "entitlements" to value.entitlements.map(::entitlement),
+    "entitlementEvaluationTimeMillis" to value.entitlements.evaluationTimeMillis,
     "transactions" to value.transactions?.map(::transaction),
     "attributes" to value.attributes?.map(::attribute),
     "hasUsedTrial" to value.hasUsedTrial,
@@ -177,7 +178,6 @@ internal object InappifyNativeCodec {
   fun offerings(value: InappifyOfferings): Map<String, Any?> = linkedMapOf(
     "offerings" to value.offerings?.map(::offering),
     "rules" to value.rules?.map(::rule),
-    "forceVersion" to value.forceVersion,
     "fetchedAt" to value.fetchedAt,
   ).apply {
     if (value.usesServerTargeting) {
@@ -337,6 +337,7 @@ internal object InappifyNativeCodec {
   private fun inappifyPackage(value: InappifyPackage): Map<String, Any?> = linkedMapOf(
     "identifier" to value.identifier,
     "packageType" to value.packageType,
+    "offeringIdentifier" to value.offeringIdentifier,
     "description" to value.description,
     "entitlement" to value.entitlement,
     "name" to value.name,
@@ -346,6 +347,7 @@ internal object InappifyNativeCodec {
 
   private fun product(value: InappifyStoreProduct): Map<String, Any?> = linkedMapOf(
     "identifier" to value.identifier,
+    "productType" to value.productType?.name,
     "name" to value.name,
     "prices" to value.prices?.map(::price),
     "dollarPrice" to value.dollarPrice,

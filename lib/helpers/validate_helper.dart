@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 import 'package:inappify_sdk/models/attribute.dart';
 
 class ValidateHelper {
@@ -12,7 +12,7 @@ class ValidateHelper {
           ((attribute.key?.length ?? 0) <= 40) &&
           ((attribute.value?.length ?? 0) <= 250);
     } catch (e) {
-      debugPrint('Inappify attribute validation failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify attribute validation failed: ${e.runtimeType}');
       return false;
     }
   }
@@ -24,7 +24,7 @@ class ValidateHelper {
       final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
       return email.isEmpty || regex.hasMatch(email);
     } catch (e) {
-      debugPrint('Inappify email validation failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify email validation failed: ${e.runtimeType}');
       return false;
     }
   }
@@ -35,7 +35,7 @@ class ValidateHelper {
     try {
       return data.isEmpty || data.length <= 250;
     } catch (e) {
-      debugPrint('Inappify string validation failed: ${e.runtimeType}');
+      SdkLogger.error('Inappify string validation failed: ${e.runtimeType}');
       return false;
     }
   }

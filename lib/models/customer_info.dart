@@ -1,3 +1,4 @@
+import 'package:inappify_sdk/models/entitlement_infos.dart';
 import 'package:inappify_sdk/models/attribute.dart';
 import 'package:inappify_sdk/models/entitlement_model.dart';
 import 'package:inappify_sdk/models/transaction_model.dart';
@@ -11,19 +12,23 @@ class CustomerInfo {
     this.originalAppUserId,
     this.firstSeen,
     this.requestDate,
-    this.entitlements,
+    List<EntitlementModel>? entitlements,
+    int? entitlementEvaluationTimeMillis,
     this.transactions,
     this.hasUsedTrial,
     this.latestExpirationDate,
     this.attributes,
-  });
+  }) : entitlements = InappifyEntitlementInfos(
+         entitlements ?? const [],
+         evaluationTimeMillis: entitlementEvaluationTimeMillis,
+       );
 
   final String? originalAppUserId;
   final String? firstSeen;
   final String? requestDate;
   final String? latestExpirationDate;
   final bool? hasUsedTrial;
-  final List<EntitlementModel>? entitlements;
+  final InappifyEntitlementInfos entitlements;
   final List<TransactionModel>? transactions;
   List<Attribute>? attributes;
 

@@ -74,10 +74,10 @@ abstract class InappifySdkPlatform extends PlatformInterface {
   /// Mobile-only, filtered diagnostics; subscriptions opt in to tracing.
   Stream<InappifyHttpTrace> get httpTraces => const Stream.empty();
 
-  Future<InappifySdkResult<List<PurchaseResult>>> syncPurchases() async =>
-      _unsupported('syncPurchases');
-  Future<InappifySdkResult<InappifyRestoreResult>> restorePurchases() async =>
-      _unsupported('restorePurchases');
+  Future<InappifySdkResult<List<PurchaseResult>>> syncStorePurchases() async =>
+      _unsupported('syncStorePurchases');
+  Future<InappifySdkResult<InappifyRestoreResult>>
+  restoreStorePurchases() async => _unsupported('restoreStorePurchases');
   Future<InappifySdkResult<InappifyConsumableSyncResult>>
   syncPendingConsumables() async => _unsupported('syncPendingConsumables');
 
@@ -91,12 +91,35 @@ abstract class InappifySdkPlatform extends PlatformInterface {
   Future<InappifySdkResult<OfferingsModel>> offeringsWithPolicy(
     InappifyFetchPolicy policy,
   ) async => _unsupported('offeringsWithPolicy');
+  Future<InappifySdkResult<OfferingsModel>>
+  syncAttributesAndOfferingsIfNeeded() async =>
+      _unsupported('syncAttributesAndOfferingsIfNeeded');
+  Future<InappifySdkResult<OfferingModel>> getOffering(
+    String identifier,
+  ) async {
+    final result = await getOfferings(const InappifyRefreshRequest());
+    if (!result.isSuccess)
+      return InappifySdkResult.failure(
+        result.failure!,
+        snapshot: result.snapshot,
+      );
+    return InappifySdkResult.success(
+      data: result.data?.getOffering(identifier),
+      snapshot: result.snapshot,
+    );
+  }
+
+  Future<InappifySdkResult<bool>> handleDeepLink(String url) async =>
+      _unsupported('handleDeepLink');
+  Future<InappifySdkResult<void>> setConsumableDeliveryHandler(
+    InappifyConsumableDeliveryHandler? handler,
+  ) async => _unsupported('setConsumableDeliveryHandler');
+
   Future<InappifySdkResult<void>> queueAttributes(
     Map<String, String?> values,
   ) async => _unsupported('queueAttributes');
   Future<InappifySdkResult<void>> flushAttributes() async =>
       _unsupported('flushAttributes');
-  Future<InappifySdkResult<void>> recover() async => _unsupported('recover');
   Future<InappifySdkResult<void>> setNetworkEnabled(bool enabled) async =>
       _unsupported('setNetworkEnabled');
   Future<InappifySdkResult<bool>> isPaymentUrlAllowed(String url) async =>

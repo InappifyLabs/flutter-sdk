@@ -49,6 +49,49 @@ void main() {
   tearDown(() => client.close());
 
   test(
+    'CustomerInfo public policies preserve cache-only and explicit server failure semantics',
+    () async {
+      await configure();
+      transport.calls.clear();
+      expect(
+        (await client.getCustomerInfo(
+          const InappifyRefreshRequest(
+            fetchPolicy: InappifyCacheFetchPolicy.cachedOrFetched,
+          ),
+        )).isSuccess,
+        isTrue,
+      );
+      expect(
+        (await client.getCustomerInfo(
+          const InappifyRefreshRequest(
+            fetchPolicy: InappifyCacheFetchPolicy.cacheOnly,
+          ),
+        )).isSuccess,
+        isTrue,
+      );
+      expect(transport.calls, isEmpty);
+      transport.respond = (_, _) async =>
+          throw const GoV2ProtocolException('NETWORK', 'OFFLINE');
+      expect(
+        (await client.getCustomerInfo(
+          const InappifyRefreshRequest(
+            fetchPolicy: InappifyCacheFetchPolicy.fetchCurrent,
+          ),
+        )).isSuccess,
+        isFalse,
+      );
+      expect(
+        (await client.getCustomerInfo(
+          const InappifyRefreshRequest(
+            fetchPolicy: InappifyCacheFetchPolicy.cacheOnly,
+          ),
+        )).isSuccess,
+        isTrue,
+      );
+    },
+  );
+
+  test(
     'offering CACHE_ONLY miss never waits for an in-flight HTTP fetch',
     () async {
       await configure();
@@ -155,7 +198,7 @@ void main() {
       await configure();
       wall = fixture.now.subtract(const Duration(days: 7));
       expect(
-        client.snapshot.customerInfo!.entitlements!.single.isActive,
+        client.snapshot.customerInfo!.entitlements.single.isActive,
         isFalse,
       );
     },
@@ -179,17 +222,17 @@ void main() {
       };
       await configure();
       expect(
-        client.snapshot.customerInfo!.entitlements!.single.isActive,
+        client.snapshot.customerInfo!.entitlements.single.isActive,
         isTrue,
       );
       elapsed = const Duration(minutes: 2).inMilliseconds;
       expect(
-        client.snapshot.customerInfo!.entitlements!.single.isActive,
+        client.snapshot.customerInfo!.entitlements.single.isActive,
         isFalse,
       );
       wall = fixture.now.subtract(const Duration(days: 1));
       expect(
-        client.snapshot.customerInfo!.entitlements!.single.isActive,
+        client.snapshot.customerInfo!.entitlements.single.isActive,
         isFalse,
       );
     },
@@ -204,7 +247,7 @@ void main() {
       client = create();
       await configure();
       expect(
-        client.snapshot.customerInfo!.entitlements!.single.isActive,
+        client.snapshot.customerInfo!.entitlements.single.isActive,
         isFalse,
       );
     },

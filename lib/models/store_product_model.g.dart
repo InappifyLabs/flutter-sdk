@@ -10,6 +10,8 @@ StoreProductModel _$StoreProductModelFromJson(Map<String, dynamic> json) {
   try {
     return StoreProductModel(
       identifier: json['identifier'] as String?,
+      productType: InappifyProductType.values.where((value) =>
+          value.wireName == json['productType']).firstOrNull,
       name: json['name'] as String?,
       prices: json['prices'] != null
           ? (json['prices'] as List<dynamic>?)
@@ -29,6 +31,7 @@ StoreProductModel _$StoreProductModelFromJson(Map<String, dynamic> json) {
 Map<String, dynamic> _$StoreProductModelToJson(StoreProductModel instance) =>
     <String, dynamic>{
       'identifier': instance.identifier,
+      'productType': instance.productType?.wireName,
       'name': instance.name,
       'price': instance.prices,
       'dollarPrice': instance.dollarPrice,

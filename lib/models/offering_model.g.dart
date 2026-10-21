@@ -15,7 +15,7 @@ OfferingModel _$OfferingModelFromJson(Map<String, dynamic> json) {
       trialDays: (json['trialDays'] as num?)?.toInt(),
       metadata: json['metadata'],
       packages: (json['packages'] as List<dynamic>?)
-          ?.map((e) => PackageModel.fromJson(e as Map<String, dynamic>))
+          ?.map((e) => PackageModel.fromJson({...e as Map<String, dynamic>, 'offeringIdentifier': json['identifier']}))
           .toList(),
       paywall: json['paywall'] == null
           ? null

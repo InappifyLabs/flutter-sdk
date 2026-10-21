@@ -1,3 +1,4 @@
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 import 'package:flutter/material.dart';
 import '../models/paywall_asset.dart';
 
@@ -16,7 +17,7 @@ class PaywallThemeManager {
     try {
       return Color(int.parse(hex, radix: 16)).withOpacity(defaultOpacity);
     } catch (e) {
-      debugPrint('Error parsing color: $hexString - $e');
+      SdkLogger.error('Paywall color parsing failed.');
       return null;
     }
   }

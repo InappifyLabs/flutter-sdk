@@ -22,7 +22,7 @@ void main() {
   late fixture.StateVerifier verifier;
   late GoV2Platform client;
   var attempt = 0;
-  GoV2Platform create() => GoV2Platform(
+  GoV2Platform create({bool automaticRecovery = false}) => GoV2Platform(
     transport: sdk,
     commerceTransport: commerce,
     storage: store,
@@ -31,7 +31,7 @@ void main() {
     metadataProvider: () async => direct.metadata,
     anonymousIdFactory: () => fixture.anonymous,
     attemptIdFactory: () => 'attempt-${++attempt}',
-    backgroundRecovery: false,
+    backgroundRecovery: automaticRecovery,
   );
   Future<void> configure({
     String? identity,
@@ -110,6 +110,26 @@ void main() {
   });
   tearDown(() => client.close());
 
+  test(
+    'configure still recovers Direct deliveries without a public recover method',
+    () async {
+      await client.close();
+      client = create(automaticRecovery: true);
+      final checked = Completer<void>();
+      commerce.respond = (endpoint, _) async {
+        expect(endpoint, 'consumable-deliveries/pending');
+        if (!checked.isCompleted) checked.complete();
+        return {'status': true, 'data': {'deliveries': []}};
+      };
+      await configure();
+      await checked.future.timeout(const Duration(seconds: 5));
+      expect(
+        commerce.calls.map((call) => call.endpoint),
+        contains('consumable-deliveries/pending'),
+      );
+    },
+  );
+
   for (final logout in [false, true]) {
     test(
       'coordinator hides Go predecessor immediately while ${logout ? 'Logout' : 'Login'} HTTP is pending',
@@ -161,9 +181,9 @@ void main() {
       await configure(country: ' ir ');
       await catalog();
       expect(sdk.calls.first.body['country'], 'IR');
-      expect(sdk.calls.first.body['sdkVersion'], '0.1.1');
+      expect(sdk.calls.first.body['sdkVersion'], '0.2.0');
       expect(sdk.calls.last.endpoint, 'offerings');
-      expect(sdk.calls.last.body['sdkVersion'], '0.1.1');
+      expect(sdk.calls.last.body['sdkVersion'], '0.2.0');
       expect(sdk.calls.last.body.containsKey('forceVersion'), false);
       expect(client.snapshot.forceVersion, null);
       expect(client.snapshot.offerings!.forceVersion, null);
@@ -459,7 +479,7 @@ void main() {
     );
     expect(sdk.calls, isEmpty);
     sdk.respond = null;
-    expect((await client.recover()).isSuccess, true);
+    expect((await login()).isSuccess, true);
     expect(sdk.calls.first.endpoint, 'login');
   });
 

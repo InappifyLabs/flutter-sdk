@@ -40,71 +40,28 @@ void main() {
   });
 
   test(
-    'encodes cache-only restore with configure options and strict boolean',
+    'retired native operations fail without sending a channel command',
     () async {
-      MethodCall? received;
-      var value = true;
+      final calls = <MethodCall>[];
       _setHandler(channel, (call) async {
-        received = call;
-        return _successEnvelope(call, data: <String, Object?>{'value': value});
+        calls.add(call);
+        return null;
       });
-      const request = InappifyConfigureRequest(
-        apiKey: 'fixture-key',
-        appUserIdentifier: 'fixture-user',
-        country: 'IR',
-        appVersion: '2.1.0',
-      );
-      expect((await platform.restoreCachedSession(request)).data, true);
-      expect(received?.method, InappifyChannelContract.restoreCachedSession);
-      expect((received?.arguments as Map)['payload'], request.toMap());
-      value = false;
-      expect((await platform.restoreCachedSession(request)).data, false);
-      _setHandler(
-        channel,
-        (call) async =>
-            _successEnvelope(call, data: <String, Object?>{'value': 'true'}),
+      expect(
+        (await platform.restoreCachedSession(
+          const InappifyConfigureRequest(apiKey: 'key'),
+        )).failure?.code,
+        InappifyFailureCode.unsupportedOperation,
       );
       expect(
-        (await platform.restoreCachedSession(request)).failure?.code,
-        InappifyFailureCode.malformedResponse,
+        (await platform.queueAttributes({'key': 'value'})).failure?.code,
+        InappifyFailureCode.unsupportedOperation,
       );
-    },
-  );
-
-  test(
-    'passes default and explicit subscription recovery flags over the channel',
-    () async {
-      MethodCall? received;
-      _setHandler(channel, (call) async {
-        received = call;
-        return _successEnvelope(call, data: <String, Object?>{'value': true});
-      });
-      const defaultRequest = InappifyConfigureRequest(apiKey: 'fixture-key');
-      expect(defaultRequest.enableSubscriptionRecoveryWithoutPayload, isTrue);
-      for (final request in [
-        defaultRequest,
-        const InappifyConfigureRequest(
-          apiKey: 'fixture-key',
-          enableSubscriptionRecoveryWithoutPayload: true,
-        ),
-        const InappifyConfigureRequest(
-          apiKey: 'fixture-key',
-          enableSubscriptionRecoveryWithoutPayload: false,
-        ),
-      ]) {
-        expect((await platform.configure(request)).isSuccess, isTrue);
-        expect(
-          (received!.arguments
-              as Map)['payload']['enableSubscriptionRecoveryWithoutPayload'],
-          request.enableSubscriptionRecoveryWithoutPayload,
-        );
-        expect((await platform.restoreCachedSession(request)).data, isTrue);
-        expect(
-          (received!.arguments
-              as Map)['payload']['enableSubscriptionRecoveryWithoutPayload'],
-          request.enableSubscriptionRecoveryWithoutPayload,
-        );
-      }
+      expect(
+        (await platform.flushAttributes()).failure?.code,
+        InappifyFailureCode.unsupportedOperation,
+      );
+      expect(calls, isEmpty);
     },
   );
 
@@ -133,24 +90,9 @@ void main() {
             'backendKind': 'methodChannel',
             'protocolVersion': 1,
             'ownsSession': true,
-            'supportedOperations': const <String>[
-              'configure',
-              'login',
-              'logout',
-              'purchase',
-              'validateDiscountCode',
-              'getCustomerInfo',
-              'getOfferings',
-              'setAttributes',
-              'setReservedAttribute',
-              'syncAttributes',
-              'setTargetingContext',
-              'getCurrentOffering',
-              'checkEntitlement',
-              'deleteAttributes',
-              'syncAttributeValues',
-              'canSetReservedAttribute',
-            ],
+            'supportedOperations': InappifyOperation.values
+                .map((op) => op.name)
+                .toList(),
             'sdkVersion': '1.2.0',
           },
         );
@@ -230,7 +172,10 @@ void main() {
       capturedCall?.arguments,
       InappifyChannelContract.requestEnvelope(
         requestId: 'request-1',
-        payload: request.toMap(),
+        payload: {
+          'apiKey': request.apiKey,
+          'appUserIdentifier': request.appUserIdentifier,
+        },
       ),
     );
     expect(result.isSuccess, isTrue);
@@ -266,7 +211,17 @@ void main() {
       capturedCall?.arguments,
       InappifyChannelContract.requestEnvelope(
         requestId: 'purchase-attempt-1',
-        payload: request.toMap(),
+        payload: {
+          'idempotencyKey': request.idempotencyKey,
+          'packageToPurchase': {
+            'identifier': request.packageIdentifier,
+            'offeringIdentifier': request.offeringIdentifier,
+            'product': {
+              'identifier': request.productIdentifier,
+              'productType': null,
+            },
+          },
+        },
       ),
     );
     expect(result.isSuccess, isTrue);

@@ -1,3 +1,4 @@
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -240,6 +241,8 @@ class DioGoV2Transport extends GoV2Transport {
       final cancel = CancelToken();
       _activeRequests.add(cancel);
       final started = _now();
+      final logEndpoint = endpoint.replaceFirst(RegExp(r'/[1-9][0-9]*/delivered$'), '/:id/delivered');
+      SdkLogger.debug('HTTP request: $logEndpoint; attempt ${attempt + 1}.');
       Map<String, List<String>> headers = const <String, List<String>>{};
       int? status;
       String? rawResponse;
@@ -368,6 +371,13 @@ class DioGoV2Transport extends GoV2Transport {
         );
       } finally {
         _activeRequests.remove(cancel);
+        if (failure != null) {
+          SdkLogger.warn('HTTP request failed.');
+        } else if ((status ?? 0) >= 400) {
+          SdkLogger.warn('HTTP response: $logEndpoint; status $status.');
+        } else {
+          SdkLogger.debug('HTTP response: $logEndpoint; status $status.');
+        }
         if (!_traces.isClosed) {
           _traces.add(<String, Object?>{
             'method': publicKeys ? 'GET' : 'POST',

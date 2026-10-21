@@ -21,10 +21,10 @@ void main() {
 
         expect(customer.originalAppUserId, 'customer-1');
         expect(customer.entitlements, hasLength(1));
-        expect(customer.entitlements?.single.identifier, 'premium');
-        expect(customer.entitlements?.single.isActive, isTrue);
+        expect(customer.entitlements.single.identifier, 'premium');
+        expect(customer.entitlements.single.isActive, isTrue);
         expect(
-          customer.entitlements?.single.expirationDate,
+          customer.entitlements.single.expirationDate,
           '2026-09-01T00:00:00Z',
         );
         expect(customer.attributes, hasLength(2));

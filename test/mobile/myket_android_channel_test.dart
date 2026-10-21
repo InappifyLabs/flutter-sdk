@@ -70,7 +70,6 @@ void main() {
               ],
             },
             'sdkConfirmDelivery' => purchase('CONSUME_REQUIRED'),
-            'sdkRecover' => <String, Object?>{},
             _ => throw StateError('Unexpected method: ${call.method}'),
           };
           expect(envelope['protocolVersion'], 1);
@@ -119,17 +118,15 @@ void main() {
           expect(configured.snapshot!.storePlatform, 11);
           expect(configured.snapshot!.sdkVersion, '0.1.1');
           final payload = (calls.single.arguments as Map)['payload'] as Map;
-          expect(payload['market'], 'myket');
-          expect(payload['marketKey'], 'synthetic-myket-rsa');
+          expect(payload, {
+            'apiKey': request.apiKey,
+            'appUserIdentifier': null,
+          });
           expect(
-            payload['mobileProtocol'],
-            mode == InappifyMobileProtocol.goV2 ? 'goV2' : isNull,
+            (await platform.restoreCachedSession(request)).failure?.code,
+            InappifyFailureCode.unsupportedOperation,
           );
-          expect((await platform.restoreCachedSession(request)).data, isTrue);
-          expect(calls.map((c) => c.method), [
-            'sdkConfigure',
-            'sdkRestoreCachedSession',
-          ]);
+          expect(calls.map((c) => c.method), ['sdkConfigure']);
         },
       );
 
@@ -150,8 +147,12 @@ void main() {
               ),
             );
             final payload = (calls.last.arguments as Map)['payload'] as Map;
-            expect(payload['market'], 'myket');
-            expect(payload['productType'], type.wireName);
+            expect(payload.containsKey('market'), isFalse);
+            expect(
+              ((payload['packageToPurchase'] as Map)['product']
+                  as Map)['productType'],
+              type.wireName,
+            );
             expect(payload['idempotencyKey'], 'same-attempt');
             expect(result.data!.mobile!.market, 'myket');
             expect(result.data!.mobile!.requiresDelivery, isTrue);
@@ -166,10 +167,10 @@ void main() {
         'Myket recovery and manual confirmation preserve source and exact ID',
         () async {
           expect(
-            (await platform.syncPurchases()).data!.single.mobile!.market,
+            (await platform.syncStorePurchases()).data!.single.mobile!.market,
             'myket',
           );
-          expect((await platform.restorePurchases()).data!.totalCount, 2);
+          expect((await platform.restoreStorePurchases()).data!.totalCount, 2);
           final pending = (await platform.syncPendingConsumables()).data!;
           expect(
             pending.pendingDeliveries.single.source,
@@ -186,10 +187,6 @@ void main() {
             confirmed.data!.mobile!.storePurchaseStatus,
             InappifyStorePurchaseStatus.consumeRequired,
           );
-          if (mode == InappifyMobileProtocol.goV2) {
-            expect((await platform.recover()).isSuccess, isTrue);
-            expect(calls.last.method, 'sdkRecover');
-          }
         },
       );
     });

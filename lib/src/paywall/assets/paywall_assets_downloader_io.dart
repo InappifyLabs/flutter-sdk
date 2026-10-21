@@ -1,6 +1,6 @@
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:crypto/crypto.dart';
@@ -19,7 +19,7 @@ abstract final class PaywallAssetsDownloaderIo {
   /// Download all assets from paywall data
   static Future<void> downloadAllAssets(List<PaywallAsset> assets) async {
     try {
-      debugPrint('Starting download of ${assets.length} assets');
+      SdkLogger.debug('Starting download of ${assets.length} assets');
 
       // Filter only asset type assets (images, etc.)
       final downloadableAssets = assets
@@ -27,7 +27,7 @@ abstract final class PaywallAssetsDownloaderIo {
           .toList();
 
       if (downloadableAssets.isEmpty) {
-        debugPrint('No downloadable assets found');
+        SdkLogger.debug('No downloadable assets found');
         return;
       }
 
@@ -38,16 +38,16 @@ abstract final class PaywallAssetsDownloaderIo {
       final futures = downloadableAssets.map((asset) => _downloadAsset(asset));
       await Future.wait(futures);
 
-      debugPrint('All assets downloaded successfully');
+      SdkLogger.debug('All assets downloaded successfully');
     } catch (error) {
-      debugPrint('Paywall asset caching failed: ${error.runtimeType}');
+      SdkLogger.error('Paywall asset caching failed: ${error.runtimeType}');
     }
   }
 
   /// Download a single asset
   static Future<void> _downloadAsset(PaywallAsset asset) async {
     if (asset.url == null || asset.url!.isEmpty) {
-      debugPrint('Asset ${asset.id} has no URL');
+      SdkLogger.debug('Asset has no URL');
       return;
     }
 
@@ -55,19 +55,19 @@ abstract final class PaywallAssetsDownloaderIo {
 
     // Check if already downloaded
     if (_urlToPathCache.containsKey(url)) {
-      debugPrint('Asset ${asset.id} already cached');
+      SdkLogger.debug('Asset already cached');
       return;
     }
 
     // Check if download is in progress
     if (_downloadInProgress[url] == true) {
-      debugPrint('Asset ${asset.id} download already in progress');
+      SdkLogger.debug('Asset download already in progress');
       return;
     }
 
     try {
       _downloadInProgress[url] = true;
-      debugPrint('Downloading paywall asset ${asset.id}.');
+      SdkLogger.debug('Downloading paywall asset.');
 
       // Download the asset
       final httpClient = HttpClient();
@@ -87,9 +87,9 @@ abstract final class PaywallAssetsDownloaderIo {
       // Cache the path
       _urlToPathCache[url] = localPath;
 
-      debugPrint('Paywall asset ${asset.id} cached.');
+      SdkLogger.debug('Paywall asset cached.');
     } catch (error) {
-      debugPrint('Paywall asset download failed: ${error.runtimeType}');
+      SdkLogger.error('Paywall asset download failed: ${error.runtimeType}');
     } finally {
       _downloadInProgress[url] = false;
     }
@@ -162,9 +162,9 @@ abstract final class PaywallAssetsDownloaderIo {
       }
       _urlToPathCache.clear();
       _downloadInProgress.clear();
-      debugPrint('Cache cleared successfully');
+      SdkLogger.debug('Cache cleared successfully');
     } catch (error) {
-      debugPrint('Paywall cache clear failed: ${error.runtimeType}');
+      SdkLogger.error('Paywall cache clear failed: ${error.runtimeType}');
     }
   }
 
@@ -185,7 +185,7 @@ abstract final class PaywallAssetsDownloaderIo {
 
       return totalSize;
     } catch (error) {
-      debugPrint('Paywall cache size read failed: ${error.runtimeType}');
+      SdkLogger.error('Paywall cache size read failed: ${error.runtimeType}');
       return 0;
     }
   }

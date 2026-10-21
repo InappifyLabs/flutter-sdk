@@ -208,10 +208,10 @@ void main() {
       'manual pending and confirm never conflate store completion with grant',
       () async {
         expect(
-          (await platform.syncPurchases()).data!.single.mobile!.deliveryId,
+          (await platform.syncStorePurchases()).data!.single.mobile!.deliveryId,
           8,
         );
-        expect((await platform.restorePurchases()).data!.totalCount, 3);
+        expect((await platform.restoreStorePurchases()).data!.totalCount, 3);
         final pending = (await platform.syncPendingConsumables()).data!;
         expect(
           pending.pendingDeliveries.single.source,
@@ -239,10 +239,10 @@ void main() {
             mobileProtocol: InappifyMobileProtocol.goV2,
           ),
         );
-        expect(
-          (calls.last.arguments as Map)['payload']['mobileProtocol'],
-          'goV2',
-        );
+        expect((calls.last.arguments as Map)['payload'], {
+          'apiKey': 'fixture',
+          'appUserIdentifier': null,
+        });
         for (final policy in InappifyFetchPolicy.values) {
           expect(
             (await platform.customerInfoWithPolicy(policy)).isSuccess,
@@ -256,12 +256,14 @@ void main() {
             isTrue,
           );
         }
-        await platform.queueAttributes({'tier': 'gold', 'removed': null});
-        expect((calls.last.arguments as Map)['payload'], {
-          'values': {'tier': 'gold', 'removed': null},
-        });
-        await platform.flushAttributes();
-        await platform.recover();
+        expect(
+          (await platform.queueAttributes({'tier': 'gold'})).failure?.code,
+          InappifyFailureCode.unsupportedOperation,
+        );
+        expect(
+          (await platform.flushAttributes()).failure?.code,
+          InappifyFailureCode.unsupportedOperation,
+        );
         await platform.setNetworkEnabled(false);
         expect((calls.last.arguments as Map)['payload'], {'enabled': false});
         expect(

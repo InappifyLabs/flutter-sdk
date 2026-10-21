@@ -1,3 +1,4 @@
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -72,7 +73,7 @@ class InappifyCoordinator {
       _httpController.add,
       onError: (Object error, StackTrace stack) {
         // Do not leak native exception messages or disrupt lifecycle operations.
-        debugPrint(
+        SdkLogger.debug(
           'Inappify HTTP diagnostics unavailable: ${error.runtimeType}',
         );
       },
@@ -256,11 +257,16 @@ class InappifyCoordinator {
 
   Future<InappifySdkResult<CustomerInfo>> getCustomerInfo({
     bool force = false,
+    InappifyCacheFetchPolicy? fetchPolicy,
     InappifyRequestCancellation? cancellation,
   }) {
     return _run<CustomerInfo>(
       (platform) => platform.getCustomerInfo(
-        InappifyRefreshRequest(force: force, cancellation: cancellation),
+        InappifyRefreshRequest(
+          force: force,
+          cancellation: cancellation,
+          fetchPolicy: fetchPolicy,
+        ),
       ),
       operationName: 'getCustomerInfo',
     );
@@ -284,6 +290,25 @@ class InappifyCoordinator {
       operationName: 'getOfferings',
     );
   }
+
+  Future<InappifySdkResult<OfferingModel>> getOffering(String identifier) =>
+      _run(
+        (platform) => platform.getOffering(identifier),
+        operationName: 'getOffering',
+      );
+  Future<InappifySdkResult<OfferingsModel>>
+  syncAttributesAndOfferingsIfNeeded() => _run(
+    (platform) => platform.syncAttributesAndOfferingsIfNeeded(),
+    operationName: 'syncAttributesAndOfferingsIfNeeded',
+  );
+  Future<InappifySdkResult<bool>> handleDeepLink(String url) =>
+      _runMobile('handleDeepLink', (platform) => platform.handleDeepLink(url));
+  Future<InappifySdkResult<void>> setConsumableDeliveryHandler(
+    InappifyConsumableDeliveryHandler? handler,
+  ) => _runMobile(
+    'setConsumableDeliveryHandler',
+    (platform) => platform.setConsumableDeliveryHandler(handler),
+  );
 
   Future<InappifySdkResult<void>> setTargetingContext(
     InappifyTargetingContextRequest request,
@@ -424,7 +449,7 @@ class InappifyCoordinator {
       }
       return result;
     } catch (error) {
-      debugPrint('Inappify $operationName failed: ${error.runtimeType}');
+      SdkLogger.error('Inappify $operationName failed: ${error.runtimeType}');
       return InappifySdkResult<T>.failure(
         InappifyFailure(
           code: InappifyFailureCode.unknown,
@@ -483,7 +508,9 @@ class InappifyCoordinator {
         selected = candidate;
       }
     } catch (error) {
-      debugPrint('Inappify platform selection failed: ${error.runtimeType}');
+      SdkLogger.error(
+        'Inappify platform selection failed: ${error.runtimeType}',
+      );
     }
 
     if (identical(selected, fallback)) {
@@ -493,7 +520,7 @@ class InappifyCoordinator {
           onError: _handleEventError,
         );
       } catch (error) {
-        debugPrint(
+        SdkLogger.debug(
           'Inappify fallback event stream failed: ${error.runtimeType}',
         );
       }
@@ -504,7 +531,7 @@ class InappifyCoordinator {
       final selectedKind = identical(selected, candidate)
           ? candidateKind
           : 'dartFallback';
-      debugPrint(
+      SdkLogger.debug(
         'Inappify backend selected: $selectedKind '
         '(candidate=$candidateKind, '
         'complete=${candidateCapabilities?.supportsCompleteLifecycle ?? false}).',
@@ -520,7 +547,7 @@ class InappifyCoordinator {
   }
 
   void _handleEventError(Object error, StackTrace stackTrace) {
-    debugPrint('Inappify platform event failed: ${error.runtimeType}');
+    SdkLogger.error('Inappify platform event failed: ${error.runtimeType}');
   }
 
   void _handleEvent(InappifyPlatformEvent event, InappifySdkPlatform source) {
@@ -595,10 +622,16 @@ class InappifyCoordinator {
     return operation(platform);
   }, operationName: name);
 
-  Future<InappifySdkResult<List<PurchaseResult>>> syncPurchases() =>
-      _runMobile('syncPurchases', (platform) => platform.syncPurchases());
-  Future<InappifySdkResult<InappifyRestoreResult>> restorePurchases() =>
-      _runMobile('restorePurchases', (platform) => platform.restorePurchases());
+  Future<InappifySdkResult<List<PurchaseResult>>> syncStorePurchases() =>
+      _runMobile(
+        'syncStorePurchases',
+        (platform) => platform.syncStorePurchases(),
+      );
+  Future<InappifySdkResult<InappifyRestoreResult>> restoreStorePurchases() =>
+      _runMobile(
+        'restoreStorePurchases',
+        (platform) => platform.restoreStorePurchases(),
+      );
   Future<InappifySdkResult<InappifyConsumableSyncResult>>
   syncPendingConsumables() => _runMobile(
     'syncPendingConsumables',
@@ -629,8 +662,6 @@ class InappifyCoordinator {
   );
   Future<InappifySdkResult<void>> flushAttributes() =>
       _runMobile('flushAttributes', (platform) => platform.flushAttributes());
-  Future<InappifySdkResult<void>> recover() =>
-      _runMobile('recover', (platform) => platform.recover());
   Future<InappifySdkResult<void>> setNetworkEnabled(bool enabled) => _runMobile(
     'setNetworkEnabled',
     (platform) => platform.setNetworkEnabled(enabled),

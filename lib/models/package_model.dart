@@ -7,6 +7,7 @@ part 'package_model.g.dart';
 class PackageModel {
   PackageModel({
     this.identifier,
+    this.offeringIdentifier,
     this.packageType,
     this.product,
     this.entitlement,
@@ -16,12 +17,24 @@ class PackageModel {
   });
 
   final String? identifier;
+  final String? offeringIdentifier;
   final int? packageType;
   final String? description;
   final String? entitlement;
   final String? name;
   final int? discountPercent;
   final StoreProductModel? product;
+
+  PackageModel withOfferingIdentifier(String? parent) => PackageModel(
+    identifier: identifier,
+    offeringIdentifier: parent,
+    packageType: packageType,
+    product: product,
+    entitlement: entitlement,
+    name: name,
+    discountPercent: discountPercent,
+    description: description,
+  );
 
   factory PackageModel.fromJson(Map<String, dynamic> json) =>
       _$PackageModelFromJson(json);

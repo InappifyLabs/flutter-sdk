@@ -2,7 +2,7 @@
 
 On iOS, Inappify runs its mobile V2 lifecycle and Direct payment flow in Dart. The Swift plugin supplies application metadata and Keychain persistence through `inappify_sdk`; it does not call the Kotlin SDK or implement an App Store billing client. Bazaar and Myket purchase, inventory and subscription recovery are Android-only.
 
-The Flutter package and mobile behavior version are `0.1.1`. [Android](ANDROID.md) explains the separate Kotlin dependency.
+The Flutter package and mobile behavior version are `0.2.0`. [Android](ANDROID.md) explains the separate Kotlin dependency.
 
 ## Application setup
 
@@ -23,7 +23,6 @@ Future<bool> initializeIosInappify(String publicAppKey, String userId) async {
   final result = await InappifySdk.configureResult(
     apiKey: publicAppKey,
     appUserIdentifier: userId,
-    country: 'IR',
   );
   return result.isSuccess;
 }
@@ -31,7 +30,7 @@ Future<bool> initializeIosInappify(String publicAppKey, String userId) async {
 
 Omit `appUserIdentifier` when accepting a retained identity or creating a new anonymous customer. Configure retains a matching saved identity when one exists, otherwise it creates an anonymous identifier; omission is not logout. Select the known application user explicitly when the host account changes. `loginResult` uses the mobile app-user identifier flow; `logoutResult` establishes the server's anonymous session after reconciling the logout. A public key and client-supplied user ID do not replace your application's backend authentication. Web Identity Tickets and OTP belong to the [Web integration](WEB.md).
 
-The `market` / `marketKey` Configure arguments do not provide iOS marketplace support. For Direct purchase, use `Market.none` (the default), and the server session must have `storePlatform == 1`. The Android option `enableSubscriptionRecoveryWithoutPayload` has no effect on iOS and is not added to its Configure HTTP payload or saved options.
+Configure takes only the app key and optional user ID. The Direct session must have storePlatform == 1; Android-specific store settings are not public inputs.
 
 ## Authentication and mobile endpoints
 
@@ -53,19 +52,9 @@ Fetch offerings before purchasing. The requested product must belong to the requ
 ```dart
 import 'package:inappify_sdk/inappify_sdk.dart';
 
-Future<String?> createIosPayment({
-  required String offeringIdentifier,
-  required String productIdentifier,
-  required String packageIdentifier,
-}) async {
-  final offerings = await InappifySdk.getOfferingsResult(forceRefresh: true);
-  if (!offerings.isSuccess) return null;
-
+Future<String?> createIosPayment(PackageModel selectedPackage) async {
   final result = await InappifySdk.purchaseResult(
-    offeringIdentifier: offeringIdentifier,
-    productIdentifier: productIdentifier,
-    packageIdentifier: packageIdentifier,
-  );
+    InappifyPurchaseParams(packageToPurchase: selectedPackage));
   if (!result.isSuccess) return null;
   final url = result.data?.url;
   if (url == null) return null;
@@ -78,22 +67,18 @@ The Direct request is `POST https://api.inappify.com/app/v2/purchase`. Its JSON 
 
 Direct purchase returns `PurchaseStatus.NEEDTOPAY` with a URL or `PurchaseStatus.DONE`. Accepted payment URLs use HTTPS, exact host `pay.inappify.com`, no URL credentials, and port 443 or the default HTTPS port. The SDK rejects untrusted purchase and discount-link URLs. Purchase does not navigate automatically.
 
-Per-purchase `apiKey`, `marketKey`, lost-purchase mode, dynamic-price token, country/app-version overrides, nonzero `discount` and `discountCode` are rejected by the iOS Direct flow. Set targeting through Configure / `setTargetingContextResult` before purchasing. Non-default marketplace purchase is rejected. `createCheckout`, `getCheckoutStatus` and `handlePaymentReturnResult` are the Web checkout APIs and are not implemented by the iOS adapter.
+Per-purchase `apiKey`, `marketKey`, lost-purchase mode, dynamic-price token, country/app-version overrides, nonzero `discount` and `discountCode` are rejected by the iOS Direct flow. Public purchase inputs now come from Package; manual targeting context is not exposed. Non-default marketplace purchase is rejected. `createCheckout`, `getCheckoutStatus` and `handlePaymentReturnResult` are the Web checkout APIs and are not implemented by the iOS adapter.
 
-After the application's payment-return or foreground callback, use `recover()` and a fresh CustomerInfo request. A return URL or browser closure alone does not prove payment completion.
+After the application's payment-return or foreground callback, request fresh CustomerInfo and use `syncPendingConsumables()` when a manual Direct delivery check is needed. Internal startup recovery remains enabled; the iOS adapter does not install Android's foreground/connectivity observers. A return URL or browser closure alone does not prove payment completion.
 
 ```dart
 import 'package:inappify_sdk/inappify_sdk.dart';
 
 Future<bool> reconcileIosPayment(String entitlementIdentifier) async {
-  await InappifySdk.recover();
-  final customer = await InappifySdk.getCustomerInfoResult(forceRefresh: true);
+  await InappifySdk.syncPendingConsumables();
+  final customer = await InappifySdk.getCustomerInfoResult(fetchPolicy: InappifyCacheFetchPolicy.fetchCurrent);
   if (!customer.isSuccess) return false;
-  final entitlement = await InappifySdk.checkEntitlementResult(
-    entitlementIdentifier,
-    forceRefresh: false,
-  );
-  return entitlement.isSuccess && entitlement.data == true;
+  return customer.data?.entitlements.active.containsKey(entitlementIdentifier) == true;
 }
 ```
 
@@ -103,7 +88,7 @@ Future<bool> reconcileIosPayment(String entitlementIdentifier) async {
 
 The Dart client saves the `hostDelivered` checkpoint before acknowledgement and can resume a pending acknowledgement during reconciliation. It does not grant your inventory. A failed acknowledgement must never cause a second host grant. Delivery responses must identify the same product, delivery and transaction and must have source `direct`.
 
-`syncPurchases()` reconciles Direct pending deliveries. `restorePurchases()` also reads Direct pending delivery state; its `restoredCount` is zero and it can report already completed deliveries. Neither method queries StoreKit, Bazaar or Myket on iOS. There is no App Store receipt restore or marketplace automatic renewal query in this adapter.
+`syncStorePurchases()` reconciles Direct pending deliveries. `restoreStorePurchases()` also reads Direct pending delivery state; its `restoredCount` is zero and it can report already completed deliveries. Neither method queries StoreKit, Bazaar or Myket on iOS. There is no App Store receipt restore or marketplace automatic renewal query in this adapter.
 
 ## Persistence and recovery
 
@@ -120,3 +105,8 @@ Cached CustomerInfo may be retained after the signed envelope expires. Entitleme
 - [Signed CustomerInfo verification](../lib/src/platform/mobile/go_v2_protocol.dart)
 - [Swift metadata and Keychain companion](../ios/Classes/InappifySdkPlugin.swift), [podspec](../ios/inappify_sdk.podspec)
 - [Public Flutter facade](../lib/inappify_sdk.dart)
+
+The 0.2.0 facade keeps the Dart Direct pipeline and persisted state unchanged.
+Native Android combined Offering sync and automatic consumable handler
+registration are unsupported on this iOS backend. Use manual delivery/recovery
+where supported; Android lifecycle/quota behavior is owned by Kotlin.

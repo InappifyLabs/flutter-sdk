@@ -8,6 +8,9 @@ internal object InappifyChannelContract {
   const val PROTOCOL_VERSION = 1
 
   const val HANDSHAKE_METHOD = "sdkHandshake"
+  const val SET_LOG_LEVEL_METHOD = "sdkSetLogLevel"
+  const val SET_LOG_HANDLER_METHOD = "sdkSetLogHandler"
+  const val LOG_CALLBACK = "sdkLog"
   const val CONFIGURE_METHOD = "sdkConfigure"
   const val RESTORE_CACHED_SESSION_METHOD = "sdkRestoreCachedSession"
   const val LOGIN_METHOD = "sdkLogin"
@@ -24,6 +27,11 @@ internal object InappifyChannelContract {
   const val CREATE_OTP_CAPTCHA_METHOD = "sdkCreateOtpCaptcha"
   const val VERIFY_OTP_METHOD = "sdkVerifyOtp"
   const val SET_TARGETING_CONTEXT_METHOD = "sdkSetTargetingContext"
+  const val GET_OFFERING_METHOD = "sdkGetOffering"
+  const val SYNC_ATTRIBUTES_AND_OFFERINGS_METHOD = "sdkSyncAttributesAndOfferingsIfNeeded"
+  const val HANDLE_DEEP_LINK_METHOD = "sdkHandleDeepLink"
+  const val SET_DELIVERY_HANDLER_METHOD = "sdkSetConsumableDeliveryHandler"
+  const val CONSUMABLE_DELIVERY_CALLBACK = "sdkConsumableDelivery"
   const val GET_CURRENT_OFFERING_METHOD = "sdkGetCurrentOffering"
   const val CHECK_ENTITLEMENT_METHOD = "sdkCheckEntitlement"
   const val DELETE_ATTRIBUTES_METHOD = "sdkDeleteAttributes"
@@ -42,7 +50,6 @@ internal object InappifyChannelContract {
   const val V2_OFFERINGS_METHOD = "sdkV2Offerings"
   const val QUEUE_ATTRIBUTES_METHOD = "sdkQueueAttributes"
   const val FLUSH_ATTRIBUTES_METHOD = "sdkFlushAttributes"
-  const val RECOVER_METHOD = "sdkRecover"
   const val SET_NETWORK_ENABLED_METHOD = "sdkSetNetworkEnabled"
   const val IS_PAYMENT_URL_ALLOWED_METHOD = "sdkIsPaymentUrlAllowed"
 
@@ -63,6 +70,8 @@ internal object InappifyChannelContract {
   /** Operations fully owned by the Android SDK in protocol v1. */
   val SUPPORTED_OPERATIONS: List<String> = listOf(
     "goV2",
+    "setLogLevel",
+    "setLogHandler",
     "configure",
     "login",
     "logout",
@@ -72,22 +81,18 @@ internal object InappifyChannelContract {
     "getOfferings",
     "setAttributes",
     "setReservedAttribute",
-    "syncAttributes",
-    "setTargetingContext",
     "getCurrentOffering",
-    "checkEntitlement",
-    "deleteAttributes",
-    "syncAttributeValues",
+    "getOffering",
+    "syncAttributesAndOfferingsIfNeeded",
+    "handleDeepLink",
+    "setConsumableDeliveryHandler",
     "canSetReservedAttribute",
-    "syncPurchases",
-    "restorePurchases",
+    "syncStorePurchases",
+    "restoreStorePurchases",
     "syncPendingConsumables",
     "confirmDelivery",
     "customerInfoWithPolicy",
     "offeringsWithPolicy",
-    "queueAttributes",
-    "flushAttributes",
-    "recover",
     "setNetworkEnabled",
     "isPaymentUrlAllowed",
     "getConfiguration",
@@ -107,7 +112,6 @@ internal object InappifyChannelContract {
 
   val NATIVE_METHODS: Set<String> = setOf(
     CONFIGURE_METHOD,
-    RESTORE_CACHED_SESSION_METHOD,
     LOGIN_METHOD,
     LOGOUT_METHOD,
     PURCHASE_METHOD,
@@ -116,12 +120,11 @@ internal object InappifyChannelContract {
     GET_OFFERINGS_METHOD,
     SET_ATTRIBUTES_METHOD,
     SET_RESERVED_ATTRIBUTE_METHOD,
-    SYNC_ATTRIBUTES_METHOD,
-    SET_TARGETING_CONTEXT_METHOD,
     GET_CURRENT_OFFERING_METHOD,
-    CHECK_ENTITLEMENT_METHOD,
-    DELETE_ATTRIBUTES_METHOD,
-    SYNC_ATTRIBUTE_VALUES_METHOD,
+    GET_OFFERING_METHOD,
+    SYNC_ATTRIBUTES_AND_OFFERINGS_METHOD,
+    HANDLE_DEEP_LINK_METHOD,
+    SET_DELIVERY_HANDLER_METHOD,
     CAN_SET_RESERVED_ATTRIBUTE_METHOD,
     SYNC_PURCHASES_METHOD,
     RESTORE_PURCHASES_METHOD,
@@ -129,9 +132,6 @@ internal object InappifyChannelContract {
     CONFIRM_DELIVERY_METHOD,
     V2_CUSTOMER_INFO_METHOD,
     V2_OFFERINGS_METHOD,
-    QUEUE_ATTRIBUTES_METHOD,
-    FLUSH_ATTRIBUTES_METHOD,
-    RECOVER_METHOD,
     SET_NETWORK_ENABLED_METHOD,
     IS_PAYMENT_URL_ALLOWED_METHOD,
     GET_CONFIGURATION_METHOD,

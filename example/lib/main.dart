@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:inappify_sdk/inappify_sdk.dart';
-import 'package:inappify_sdk/models/enums/market.dart';
 import 'package:inappify_sdk/models/offering_model.dart';
 
 void main() {
@@ -9,7 +8,7 @@ void main() {
   runApp(const InappifyExampleApp());
 }
 
-/// Supply public bootstrap and marketplace keys with --dart-define.
+/// Supply the public app key and optional user identifier with --dart-define.
 /// No SDK network operation runs until a button is pressed.
 class InappifyExampleApp extends StatelessWidget {
   const InappifyExampleApp({super.key});
@@ -31,20 +30,12 @@ class _ExamplePage extends StatefulWidget {
 
 class _ExamplePageState extends State<_ExamplePage> {
   static const _appKey = String.fromEnvironment('INAPPIFY_PUBLIC_APP_KEY');
-  static const _marketKey = String.fromEnvironment('INAPPIFY_MARKET_KEY');
   static const _userId = String.fromEnvironment('INAPPIFY_APP_USER_ID');
-  static const _market = String.fromEnvironment('INAPPIFY_MARKET');
 
   bool _busy = false;
   bool _configured = false;
   String _message = 'Provide a public app key, then configure the SDK.';
   OfferingModel? _offering;
-
-  Market? get _selectedMarket => switch (_market) {
-    'bazar' => Market.bazar,
-    'myket' => Market.myket,
-    _ => null,
-  };
 
   Future<void> _perform(Future<String> Function() operation) async {
     setState(() => _busy = true);
@@ -66,8 +57,6 @@ class _ExamplePageState extends State<_ExamplePage> {
     final result = await InappifySdk.configureResult(
       apiKey: _appKey,
       appUserIdentifier: kIsWeb || _userId.isEmpty ? null : _userId,
-      market: _selectedMarket,
-      marketKey: _marketKey.isEmpty ? null : _marketKey,
     );
     _configured = result.isSuccess;
     return result.isSuccess
@@ -76,9 +65,7 @@ class _ExamplePageState extends State<_ExamplePage> {
   }
 
   Future<String> _loadOffering() async {
-    final result = await InappifySdk.getCurrentOfferingResult(
-      forceRefresh: true,
-    );
+    final result = await InappifySdk.getCurrentOfferingResult();
     if (!result.isSuccess) return _failure(result.failure);
     _offering = result.data;
     return _offering == null
@@ -111,7 +98,7 @@ class _ExamplePageState extends State<_ExamplePage> {
                   final result = await InappifySdk.getCustomerInfoResult();
                   return result.isSuccess
                       ? 'Customer refreshed. Entitlements: '
-                            '${result.data?.entitlements?.length ?? 0}'
+                            '${result.data?.entitlements.length ?? 0}'
                       : _failure(result.failure);
                 }),
           child: const Text('Refresh customer'),
@@ -120,12 +107,12 @@ class _ExamplePageState extends State<_ExamplePage> {
           onPressed: _busy || !_configured || kIsWeb
               ? null
               : () => _perform(() async {
-                  final result = await InappifySdk.recover();
+                  final result = await InappifySdk.syncStorePurchases();
                   return result.isSuccess
-                      ? 'Recovery completed.'
+                      ? 'Purchase sync completed.'
                       : _failure(result.failure);
                 }),
-          child: const Text('Recover mobile purchases'),
+          child: const Text('Sync store purchases'),
         ),
         if (_offering != null)
           OutlinedButton(

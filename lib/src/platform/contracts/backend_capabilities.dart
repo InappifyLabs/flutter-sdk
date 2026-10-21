@@ -5,6 +5,12 @@ enum InappifyBackendKind { dart, webJavaScript, methodChannel, unknown }
 
 /// Semantic operations that must be implemented by a full SDK backend.
 enum InappifyOperation {
+  setLogLevel,
+  setLogHandler,
+  getOffering,
+  syncAttributesAndOfferingsIfNeeded,
+  handleDeepLink,
+  setConsumableDeliveryHandler,
   configure,
   login,
   logout,
@@ -33,15 +39,14 @@ enum InappifyOperation {
   // Additive mobile capabilities; never part of the existing required sets.
   restoreCachedSession,
   goV2,
-  syncPurchases,
-  restorePurchases,
+  syncStorePurchases,
+  restoreStorePurchases,
   syncPendingConsumables,
   confirmDelivery,
   customerInfoWithPolicy,
   offeringsWithPolicy,
   queueAttributes,
   flushAttributes,
-  recover,
   setNetworkEnabled,
   isPaymentUrlAllowed,
 }
@@ -86,12 +91,20 @@ class InappifyBackendCapabilities {
 
   static const Set<InappifyOperation> _nativeRequiredOperations =
       <InappifyOperation>{
-        ..._dartRequiredOperations,
-        InappifyOperation.setTargetingContext,
+        InappifyOperation.configure,
+        InappifyOperation.login,
+        InappifyOperation.logout,
+        InappifyOperation.purchase,
+        InappifyOperation.validateDiscountCode,
+        InappifyOperation.getCustomerInfo,
+        InappifyOperation.getOfferings,
+        InappifyOperation.setAttributes,
+        InappifyOperation.setReservedAttribute,
         InappifyOperation.getCurrentOffering,
-        InappifyOperation.checkEntitlement,
-        InappifyOperation.deleteAttributes,
-        InappifyOperation.syncAttributeValues,
+        InappifyOperation.getOffering,
+        InappifyOperation.syncAttributesAndOfferingsIfNeeded,
+        InappifyOperation.setConsumableDeliveryHandler,
+        InappifyOperation.handleDeepLink,
         InappifyOperation.canSetReservedAttribute,
       };
 
@@ -220,6 +233,12 @@ class InappifyBackendCapabilities {
 
   static InappifyOperation? _operationFromWireName(String? name) {
     return switch (name) {
+      'getOffering' => InappifyOperation.getOffering,
+      'syncAttributesAndOfferingsIfNeeded' =>
+        InappifyOperation.syncAttributesAndOfferingsIfNeeded,
+      'setConsumableDeliveryHandler' =>
+        InappifyOperation.setConsumableDeliveryHandler,
+      'handleDeepLink' => InappifyOperation.handleDeepLink,
       'configure' => InappifyOperation.configure,
       'login' => InappifyOperation.login,
       'logout' => InappifyOperation.logout,
@@ -246,15 +265,16 @@ class InappifyBackendCapabilities {
       'getCheckoutStatus' => InappifyOperation.getCheckoutStatus,
       'getConfiguration' => InappifyOperation.getConfiguration,
       'goV2' => InappifyOperation.goV2,
-      'syncPurchases' => InappifyOperation.syncPurchases,
-      'restorePurchases' => InappifyOperation.restorePurchases,
+      'setLogLevel' => InappifyOperation.setLogLevel,
+      'setLogHandler' => InappifyOperation.setLogHandler,
+      'syncStorePurchases' => InappifyOperation.syncStorePurchases,
+      'restoreStorePurchases' => InappifyOperation.restoreStorePurchases,
       'syncPendingConsumables' => InappifyOperation.syncPendingConsumables,
       'confirmDelivery' => InappifyOperation.confirmDelivery,
       'customerInfoWithPolicy' => InappifyOperation.customerInfoWithPolicy,
       'offeringsWithPolicy' => InappifyOperation.offeringsWithPolicy,
       'queueAttributes' => InappifyOperation.queueAttributes,
       'flushAttributes' => InappifyOperation.flushAttributes,
-      'recover' => InappifyOperation.recover,
       'setNetworkEnabled' => InappifyOperation.setNetworkEnabled,
       'isPaymentUrlAllowed' => InappifyOperation.isPaymentUrlAllowed,
       _ => null,

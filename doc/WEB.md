@@ -2,7 +2,7 @@
 
 The browser adapter delegates an entire session to the external `@inappifylabs/web-sdk` JavaScript provider. Flutter exposes typed customer, offering, authentication and checkout models; the JavaScript instance owns browser transport, credentials, refresh and persistence. The Kotlin SDK is used only on Android.
 
-The Flutter package version is `0.1.1`. The reviewed Web provider baseline is **`@inappifylabs/web-sdk@0.1.0-beta.3`**, an independent version. Do not replace it with `0.1.0` merely to match the Flutter package. Capability negotiation accepts provider versions `0.1.0-beta.3` and later beta builds of `0.1.0`, stable `0.1.0`, or a higher numeric release. Missing, malformed or earlier provider versions are rejected.
+The Flutter package version is `0.2.0`. The reviewed Web provider baseline is **`@inappifylabs/web-sdk@0.1.0-beta.3`**, an independent version. Do not replace it with `0.1.0` merely to match the Flutter package. Capability negotiation accepts provider versions `0.1.0-beta.3` and later beta builds of `0.1.0`, stable `0.1.0`, or a higher numeric release. Missing, malformed or earlier provider versions are rejected.
 
 ## Install the browser bridge before Flutter starts
 
@@ -147,7 +147,7 @@ Future<bool> verifyWebPaymentReturn({String? checkoutId}) async {
     intervalMs: 1500,
   );
   if (!result.isSuccess || result.data?.isPaid != true) return false;
-  await InappifySdk.getCustomerInfoResult(forceRefresh: true);
+  await InappifySdk.getCustomerInfoResult(fetchPolicy: InappifyCacheFetchPolicy.fetchCurrent);
   return true;
 }
 ```
@@ -160,7 +160,7 @@ An `InappifyRequestCancellation` can cancel supported JS network calls through `
 
 Web supports customer/offerings/current offering, targeting context, custom/reserved attributes, discount validation, entitlement checks, session authentication and checkout operations advertised by its capability contract. `setIp` is unsupported; check optional reserved-attribute capability with `canSetReservedAttributeResult`.
 
-The mobile V2 helpers `recover`, `setNetworkEnabled`, policy-based mobile fetches, mobile store restoration and consumable delivery confirmation are not Web methods. Use the provider-backed Web operations above. Bazaar/Myket billing and native `productType`/store receipt processing remain Android responsibilities; they do not become Web payments by passing a marketplace argument. The Flutter HTTP trace stream has no Web HTTP backend; use typed failures and provider-compatible browser diagnostics without logging credentials.
+The mobile V2 helpers `setNetworkEnabled`, policy-based mobile fetches, mobile store restoration and consumable delivery confirmation are not Web methods. Use the provider-backed Web operations above. Bazaar/Myket billing and native `productType`/store receipt processing remain Android responsibilities; they do not become Web payments by passing a marketplace argument. The Flutter HTTP trace stream has no Web HTTP backend; use typed failures and provider-compatible browser diagnostics without logging credentials.
 
 ## Implementation references
 

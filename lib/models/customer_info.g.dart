@@ -9,6 +9,7 @@ part of 'customer_info.dart';
 CustomerInfo _$CustomerInfoFromJson(Map<String, dynamic> json) => CustomerInfo(
       originalAppUserId: json['originalAppUserId'] as String?,
       firstSeen: json['firstSeen'] as String?,
+      entitlementEvaluationTimeMillis: (json['entitlementEvaluationTimeMillis'] as num?)?.toInt(),
       requestDate: json['requestDate'] as String?,
       entitlements: (json['entitlements'] as List<dynamic>?)
           ?.map((e) => EntitlementModel.fromJson(e as Map<String, dynamic>))

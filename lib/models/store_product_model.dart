@@ -1,3 +1,4 @@
+import 'package:inappify_sdk/models/mobile_v2.dart';
 import 'package:inappify_sdk/models/price_model.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -7,6 +8,7 @@ part 'store_product_model.g.dart';
 class StoreProductModel {
   StoreProductModel({
     this.identifier,
+    this.productType,
     this.name,
     this.prices,
     this.dollarPrice,
@@ -14,6 +16,7 @@ class StoreProductModel {
   });
 
   final String? identifier;
+  final InappifyProductType? productType;
   final String? name;
   final List<PriceModel>? prices;
   final double? dollarPrice;

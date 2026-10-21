@@ -9,6 +9,7 @@ part of 'package_model.dart';
 PackageModel _$PackageModelFromJson(Map<String, dynamic> json) {
   return PackageModel(
       identifier: json['identifier'] as String?,
+      offeringIdentifier: json['offeringIdentifier'] as String?,
       packageType: (json['packageType'] as num?)?.toInt(),
       product: json['product'] == null
           ? null
@@ -23,10 +24,11 @@ PackageModel _$PackageModelFromJson(Map<String, dynamic> json) {
 Map<String, dynamic> _$PackageModelToJson(PackageModel instance) =>
     <String, dynamic>{
       'identifier': instance.identifier,
+      'offeringIdentifier': instance.offeringIdentifier,
       'packageType': instance.packageType,
       'description': instance.description,
       'entitlement': instance.entitlement,
       'name': instance.name,
       'discountPercent': instance.discountPercent,
-      'product': instance.product,
+      'product': instance.product?.toJson(),
     };

@@ -1,4 +1,8 @@
+import 'package:inappify_sdk/models/purchase_params.dart';
 import 'dart:async';
+import 'package:inappify_sdk/models/log_level.dart';
+import 'package:inappify_sdk/src/logging/native_logging.dart';
+export 'package:inappify_sdk/models/log_level.dart';
 
 import 'package:inappify_sdk/models/attribute.dart';
 import 'package:inappify_sdk/models/mobile_v2.dart';
@@ -7,7 +11,6 @@ import 'package:inappify_sdk/models/captcha_challenge.dart';
 import 'package:inappify_sdk/models/checkout_result.dart';
 import 'package:inappify_sdk/models/customer_info.dart';
 import 'package:inappify_sdk/models/entitlement_model.dart';
-import 'package:inappify_sdk/models/enums/market.dart';
 import 'package:inappify_sdk/models/inappify_configuration.dart';
 import 'package:inappify_sdk/models/offering_model.dart';
 import 'package:inappify_sdk/models/offerings_model.dart';
@@ -25,6 +28,10 @@ import 'package:inappify_sdk/src/platform/contracts/sdk_snapshot.dart';
 
 export 'package:inappify_sdk/models/authentication_result.dart';
 export 'package:inappify_sdk/models/mobile_v2.dart';
+export 'package:inappify_sdk/models/purchase_params.dart';
+export 'package:inappify_sdk/models/package_model.dart';
+export 'package:inappify_sdk/models/customer_info.dart';
+export 'package:inappify_sdk/models/entitlement_infos.dart';
 export 'package:inappify_sdk/models/captcha_challenge.dart';
 export 'package:inappify_sdk/models/checkout_result.dart';
 export 'package:inappify_sdk/models/inappify_configuration.dart';
@@ -50,6 +57,15 @@ class InappifySdk {
   ///
   /// SDK operations remain static to preserve the existing application API.
   InappifySdk();
+
+  /// Global minimum severity, configurable before Configure.
+  /// Defaults to debug in development and info in release/profile builds.
+  static Future<void> setLogLevel(InappifyLogLevel level) =>
+      NativeLogging.setLevel(level);
+
+  /// Replaces console output with filtered SDK messages; null restores the console.
+  static Future<void> setLogHandler(InappifyLogHandler? handler) =>
+      NativeLogging.setHandler(handler);
 
   static final _coordinator = InappifySdkRuntime.coordinator;
 
@@ -151,96 +167,27 @@ class InappifySdk {
   static bool get faildToLoadCustomerInfo =>
       _coordinator.state.failedToLoadCustomerInfo;
 
-  /// Configures one authoritative backend for the complete SDK session.
-  ///
-  /// Concurrent calls with identical input share one Future. Failures preserve
-  /// the historical `false` result and do not throw into fire-and-forget call
-  /// sites. API and market keys must never be logged by implementations.
-  /// On Web, [apiKey] must be the Public Web App Key and an authenticated
-  /// [appUserIdentifier] is rejected; exchange an Identity Ticket after
-  /// configuring the browser session instead.
-  /// [enableSubscriptionRecoveryWithoutPayload] controls only native Android
-  /// Bazaar recovery. Its default is true and requires the V2 subscription
-  /// recovery endpoint; set false to opt out. iOS and Web ignore this option.
+  /// Configure with the app key and optional customer identifier.
+  /// Native metadata and the server supply app version, market and billing key.
   static Future<bool> configure({
     required String apiKey,
     String? appUserIdentifier,
-    Market? market,
-    String? marketKey,
-    String? country,
-    String? appVersion,
-    InappifyMobileProtocol mobileProtocol = InappifyMobileProtocol.goV2,
-    bool enableSubscriptionRecoveryWithoutPayload = true,
-  }) async {
-    final result = await configureResult(
-      apiKey: apiKey,
-      appUserIdentifier: appUserIdentifier,
-      market: market,
-      marketKey: marketKey,
-      country: country,
-      appVersion: appVersion,
-      mobileProtocol: mobileProtocol,
-      enableSubscriptionRecoveryWithoutPayload:
-          enableSubscriptionRecoveryWithoutPayload,
-    );
-    return result.isSuccess;
-  }
+  }) async => (await configureResult(
+    apiKey: apiKey,
+    appUserIdentifier: appUserIdentifier,
+  )).isSuccess;
 
-  /// Optional backend operation for restoring a session without HTTP.
-  /// Production Android and iOS V2 backends do not support this operation.
-  /// Use [configureResult] to load validated persisted state and refresh it.
-  static Future<InappifySdkResult<bool>> restoreCachedSessionResult({
-    required String apiKey,
-    String? appUserIdentifier,
-    Market? market,
-    String? marketKey,
-    String? country,
-    String? appVersion,
-    InappifyMobileProtocol mobileProtocol = InappifyMobileProtocol.goV2,
-    bool enableSubscriptionRecoveryWithoutPayload = true,
-  }) async => _record(
-    await _coordinator.restoreCachedSession(
-      InappifyConfigureRequest(
-        apiKey: apiKey,
-        appUserIdentifier: appUserIdentifier,
-        market: market,
-        marketKey: marketKey,
-        country: country,
-        appVersion: appVersion,
-        mobileProtocol: mobileProtocol,
-        enableSubscriptionRecoveryWithoutPayload:
-            enableSubscriptionRecoveryWithoutPayload,
-      ),
-    ),
-  );
-
-  /// Typed variant of [configure] that preserves sanitized failure metadata.
   static Future<InappifySdkResult<void>> configureResult({
     required String apiKey,
     String? appUserIdentifier,
-    Market? market,
-    String? marketKey,
-    String? country,
-    String? appVersion,
-    InappifyMobileProtocol mobileProtocol = InappifyMobileProtocol.goV2,
-    bool enableSubscriptionRecoveryWithoutPayload = true,
-  }) async {
-    return _record(
-      await _coordinator.configure(
-        InappifyConfigureRequest(
-          apiKey: apiKey,
-          appUserIdentifier: appUserIdentifier,
-          market: market,
-          marketKey: marketKey,
-          country: country,
-          appVersion: appVersion,
-          mobileProtocol: mobileProtocol,
-          enableSubscriptionRecoveryWithoutPayload:
-              enableSubscriptionRecoveryWithoutPayload,
-        ),
+  }) async => _record(
+    await _coordinator.configure(
+      InappifyConfigureRequest(
+        apiKey: apiKey,
+        appUserIdentifier: appUserIdentifier,
       ),
-    );
-  }
+    ),
+  );
 
   /// Configures and guarantees an authenticated Web session for a logged-in
   /// host application user.
@@ -515,15 +462,15 @@ class InappifySdk {
   /// This compatibility API is implemented by Dart and the Android native
   /// backend. The Web backend returns `false` because the browser SDK accepts
   /// only [loginWithIdentityTicket] or OTP, not a stable user identifier.
-  static Future<bool> login({required String appUserIdentifier}) async {
-    final result = await loginResult(appUserIdentifier: appUserIdentifier);
+  static Future<bool> logIn(String appUserIdentifier) async {
+    final result = await logInResult(appUserIdentifier);
     return result.isSuccess;
   }
 
-  /// Typed variant of [login]. Web callers should use Identity Ticket or OTP.
-  static Future<InappifySdkResult<void>> loginResult({
-    required String appUserIdentifier,
-  }) async {
+  /// Typed variant of [logIn]. Web callers should use Identity Ticket or OTP.
+  static Future<InappifySdkResult<void>> logInResult(
+    String appUserIdentifier,
+  ) async {
     return _record(
       await _coordinator.login(
         InappifyLoginRequest(appUserIdentifier: appUserIdentifier),
@@ -676,114 +623,54 @@ class InappifySdk {
     );
   }
 
-  /// Starts a purchase using the backend selected during configuration.
-  ///
-  /// A returned URL remains owned by the Flutter application, matching the
-  /// host application navigation contract. A failed or cancelled legacy
-  /// purchase returns `null` for backward compatibility.
-  static Future<PurchaseResult?> purchase({
-    required String productIdentifier,
-    required String offeringIdentifier,
-    String? packageIdentifier,
-    String? discountCode,
-    String? country,
-    String? appVersion,
-    String? apiKey,
-    int discount = 0,
-    bool isCrypto = false,
-    Market market = Market.none,
-    String? marketKey,
-    bool isLostPurchase = false,
-    String? lostPurchaseToken,
-    int? lostPurchaseTime,
-    String? idempotencyKey,
-    InappifyProductType? productType,
-    String? dynamicPriceToken,
-    int? paywallId,
-    int? paywallRevision,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    final result = await purchaseResult(
-      productIdentifier: productIdentifier,
-      offeringIdentifier: offeringIdentifier,
-      packageIdentifier: packageIdentifier,
-      discountCode: discountCode,
-      country: country,
-      appVersion: appVersion,
-      apiKey: apiKey,
-      discount: discount,
-      isCrypto: isCrypto,
-      market: market,
-      marketKey: marketKey,
-      isLostPurchase: isLostPurchase,
-      lostPurchaseToken: lostPurchaseToken,
-      lostPurchaseTime: lostPurchaseTime,
-      idempotencyKey: idempotencyKey,
-      productType: productType,
-      dynamicPriceToken: dynamicPriceToken,
-      paywallId: paywallId,
-      paywallRevision: paywallRevision,
-      cancellation: cancellation,
-    );
+  /// Purchase a package returned by an offering; Android supplies its Activity.
+  static Future<PurchaseResult?> purchase(InappifyPurchaseParams params) async {
+    final result = await purchaseResult(params);
     return result.isSuccess ? result.data : null;
   }
 
-  /// Typed purchase variant preserving checkout correlation and failures.
-  ///
-  /// [idempotencyKey] must be reused only when retrying the same logical
-  /// purchase attempt. Omit it to let the façade create a fresh identifier;
-  /// typed failures expose that non-secret identifier in `details` so an
-  /// ambiguous checkout can be reconciled or retried with the same key.
-  static Future<InappifySdkResult<PurchaseResult>> purchaseResult({
-    required String productIdentifier,
-    required String offeringIdentifier,
-    String? packageIdentifier,
-    String? discountCode,
-    String? country,
-    String? appVersion,
-    String? idempotencyKey,
-    String? apiKey,
-    int discount = 0,
-    bool isCrypto = false,
-    Market market = Market.none,
-    String? marketKey,
-    bool isLostPurchase = false,
-    String? lostPurchaseToken,
-    int? lostPurchaseTime,
-    InappifyProductType? productType,
-    String? dynamicPriceToken,
-    int? paywallId,
-    int? paywallRevision,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    final resolvedIdempotencyKey = idempotencyKey ?? _nextRequestId('purchase');
+  /// Typed result retains the attempt key for retrying the same logical purchase.
+  static Future<InappifySdkResult<PurchaseResult>> purchaseResult(
+    InappifyPurchaseParams params,
+  ) async {
+    final selected = params.packageToPurchase;
+    final product = selected.product?.identifier;
+    final offering = selected.offeringIdentifier;
+    final identifier = selected.identifier;
+    final id = params.idempotencyKey ?? _nextRequestId('purchase');
+    if (product == null ||
+        product.trim().isEmpty ||
+        offering == null ||
+        offering.trim().isEmpty ||
+        identifier == null ||
+        identifier.trim().isEmpty) {
+      return _record(
+        InappifySdkResult<PurchaseResult>.failure(
+          const InappifyFailure(
+            code: InappifyFailureCode.invalidConfiguration,
+            message: 'The selected package is missing purchase metadata.',
+            details: {
+              'operation': 'purchase',
+              'serverCode': 'PURCHASE_PACKAGE_CONTEXT_REQUIRED',
+            },
+          ),
+          snapshot: snapshot,
+        ),
+      );
+    }
     final result = await _coordinator.purchase(
       InappifyPurchaseRequest(
-        productIdentifier: productIdentifier,
-        offeringIdentifier: offeringIdentifier,
-        idempotencyKey: resolvedIdempotencyKey,
-        packageIdentifier: packageIdentifier,
-        discountCode: discountCode,
-        country: country,
-        appVersion: appVersion,
-        apiKey: apiKey,
-        discount: discount,
-        isCrypto: isCrypto,
-        market: market,
-        marketKey: marketKey,
-        isLostPurchase: isLostPurchase,
-        lostPurchaseToken: lostPurchaseToken,
-        lostPurchaseTime: lostPurchaseTime,
-        productType: productType,
-        dynamicPriceToken: dynamicPriceToken,
-        paywallId: paywallId,
-        paywallRevision: paywallRevision,
-        cancellation: cancellation,
+        productIdentifier: product,
+        offeringIdentifier: offering,
+        packageIdentifier: identifier,
+        productType: selected.product?.productType,
+        packageToPurchase: selected,
+        idempotencyKey: id,
+        paywallId: params.paywallId,
+        paywallRevision: params.paywallRevision,
       ),
     );
-    return _record(
-      _withIdempotencyKey(result, idempotencyKey: resolvedIdempotencyKey),
-    );
+    return _record(_withIdempotencyKey(result, idempotencyKey: id));
   }
 
   /// Creates a canonical checkout without navigating the browser.
@@ -836,76 +723,39 @@ class InappifySdk {
   }
 
   /// Validates a discount code for the active customer.
-  static Future<ValidateDiscountCodeData?> validateDiscountCode({
-    required String discountCode,
-    String? offeringIdentifier,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    final result = await validateDiscountCodeResult(
-      discountCode: discountCode,
-      offeringIdentifier: offeringIdentifier,
-      cancellation: cancellation,
-    );
+  static Future<ValidateDiscountCodeData?> getDiscountedPaymentLinks(
+    String discountCode,
+  ) async {
+    final result = await getDiscountedPaymentLinksResult(discountCode);
     return result.isSuccess ? result.data : null;
   }
 
-  /// Typed discount validation result with sanitized provider diagnostics.
   static Future<InappifySdkResult<ValidateDiscountCodeData>>
-  validateDiscountCodeResult({
-    required String discountCode,
-    String? offeringIdentifier,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    return _record(
-      await _coordinator.validateDiscountCode(
-        InappifyDiscountCodeRequest(
-          discountCode: discountCode,
-          offeringIdentifier: offeringIdentifier,
-          cancellation: cancellation,
-        ),
-      ),
-    );
-  }
+  getDiscountedPaymentLinksResult(String discountCode) async => _record(
+    await _coordinator.validateDiscountCode(
+      InappifyDiscountCodeRequest(discountCode: discountCode),
+    ),
+  );
 
-  /// Ends the active session while preserving the historical bool result.
-  static Future<bool> logout({
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    final result = await logoutResult(cancellation: cancellation);
-    return result.isSuccess;
-  }
+  /// End the session through the existing native identity/cache transition.
+  static Future<bool> logOut() async => (await logOutResult()).isSuccess;
+  static Future<InappifySdkResult<void>> logOutResult() async =>
+      _record(await _coordinator.logout());
 
-  /// Typed logout result with the authoritative post-operation snapshot.
-  static Future<InappifySdkResult<void>> logoutResult({
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    return _record(await _coordinator.logout(cancellation: cancellation));
-  }
-
-  /// Refreshes customer information from the backend that owns the session.
+  /// Default: return cached data, then refresh stale data in the background.
   static Future<CustomerInfo?> getCustomerInfo({
-    bool forceRefresh = true,
-    InappifyRequestCancellation? cancellation,
+    InappifyCacheFetchPolicy fetchPolicy =
+        InappifyCacheFetchPolicy.cachedOrFetched,
   }) async {
-    final result = await getCustomerInfoResult(
-      forceRefresh: forceRefresh,
-      cancellation: cancellation,
-    );
+    final result = await getCustomerInfoResult(fetchPolicy: fetchPolicy);
     return result.isSuccess ? result.data : null;
   }
 
-  /// Typed customer refresh result.
   static Future<InappifySdkResult<CustomerInfo>> getCustomerInfoResult({
-    bool forceRefresh = true,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    return _record(
-      await _coordinator.getCustomerInfo(
-        force: forceRefresh,
-        cancellation: cancellation,
-      ),
-    );
-  }
+    InappifyCacheFetchPolicy fetchPolicy =
+        InappifyCacheFetchPolicy.cachedOrFetched,
+  }) async =>
+      _record(await _coordinator.getCustomerInfo(fetchPolicy: fetchPolicy));
 
   /// Returns token-free backend capabilities and browser allowlists.
   static Future<InappifyConfiguration?> getConfiguration() async {
@@ -919,105 +769,49 @@ class InappifySdk {
     return _record(await _coordinator.getConfiguration());
   }
 
-  /// Returns cached offerings or forces a service refresh when requested.
-  static Future<OfferingsModel?> getOfferings({
-    bool forceRefresh = false,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    final result = await getOfferingsResult(
-      forceRefresh: forceRefresh,
-      cancellation: cancellation,
-    );
+  /// Read offerings through the native cache and automatic refresh policy.
+  static Future<OfferingsModel?> getOfferings() async {
+    final result = await getOfferingsResult();
     return result.isSuccess ? result.data : null;
   }
 
-  /// Typed offering refresh result, including cancellation failures.
-  static Future<InappifySdkResult<OfferingsModel>> getOfferingsResult({
-    bool forceRefresh = false,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    return _record(
-      await _coordinator.getOfferings(
-        force: forceRefresh,
-        cancellation: cancellation,
-      ),
-    );
+  static Future<InappifySdkResult<OfferingsModel>> getOfferingsResult() async =>
+      _record(await _coordinator.getOfferings());
+  static Future<OfferingModel?> getOffering(String identifier) async {
+    final result = await getOfferingResult(identifier);
+    return result.isSuccess ? result.data : null;
   }
 
-  /// Updates the runtime targeting context and invalidates offering caches.
-  static Future<bool> setTargetingContext({
-    String? country,
-    String? appVersion,
-  }) async {
-    final result = await setTargetingContextResult(
-      country: country,
-      appVersion: appVersion,
-    );
-    return result.isSuccess;
-  }
+  static Future<InappifySdkResult<OfferingModel>> getOfferingResult(
+    String identifier,
+  ) async => _record(await _coordinator.getOffering(identifier));
 
-  /// Typed runtime-targeting update result.
-  static Future<InappifySdkResult<void>> setTargetingContextResult({
-    String? country,
-    String? appVersion,
-  }) async {
-    return _record(
-      await _coordinator.setTargetingContext(
-        InappifyTargetingContextRequest(
-          country: country,
-          appVersion: appVersion,
-        ),
-      ),
-    );
-  }
-
-  /// Resolves the current offering using backend-owned placement rules.
+  /// Placement selection, then current offering, then project default.
   static Future<OfferingModel?> getCurrentOffering({
     String? placementIdentifier,
-    bool forceRefresh = false,
-    Map<String, Object?>? context,
-    InappifyRequestCancellation? cancellation,
   }) async {
     final result = await getCurrentOfferingResult(
       placementIdentifier: placementIdentifier,
-      forceRefresh: forceRefresh,
-      context: context,
-      cancellation: cancellation,
     );
     return result.isSuccess ? result.data : null;
   }
 
-  /// Typed placement-aware offering resolution result.
-  ///
-  /// A successful result may contain null when no rule selects an offering.
   static Future<InappifySdkResult<OfferingModel>> getCurrentOfferingResult({
     String? placementIdentifier,
-    bool forceRefresh = false,
-    Map<String, Object?>? context,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    return _record(
-      await _coordinator.getCurrentOffering(
-        InappifyCurrentOfferingRequest(
-          placementIdentifier: placementIdentifier,
-          forceRefresh: forceRefresh,
-          context: context,
-          cancellation: cancellation,
-        ),
-      ),
-    );
-  }
+  }) async => _record(
+    await _coordinator.getCurrentOffering(
+      InappifyCurrentOfferingRequest(placementIdentifier: placementIdentifier),
+    ),
+  );
+
+  /// Flush attributes and fetch offerings; native limit: five calls per minute.
+  static Future<InappifySdkResult<OfferingsModel>>
+  syncAttributesAndOfferingsIfNeeded() async =>
+      _record(await _coordinator.syncAttributesAndOfferingsIfNeeded());
 
   /// Returns whether the named entitlement is active in the mirrored snapshot.
-  /// Go access decisions should use [checkEntitlementResult], which applies
-  /// verified data and trusted time. This compatibility UI helper uses wall time.
   static bool isActiveEntitlement(String name) {
-    for (final entitlement in customerInfo?.entitlements ?? const []) {
-      if (entitlement.identifier == name && _isEntitlementActive(entitlement)) {
-        return true;
-      }
-    }
-    return false;
+    return customerInfo?.entitlements.active.containsKey(name) == true;
   }
 
   /// Alias for [isActiveEntitlement] matching the Web SDK terminology.
@@ -1027,47 +821,9 @@ class InappifySdk {
 
   /// Returns the named entitlement from the latest customer snapshot.
   static EntitlementModel? getEntitlement(String identifier) {
-    for (final entitlement in customerInfo?.entitlements ?? const []) {
-      if (entitlement.identifier == identifier &&
-          _isEntitlementActive(entitlement)) {
-        return entitlement;
-      }
-    }
-    return null;
+    return customerInfo?.entitlements.active[identifier];
   }
 
-  /// Verifies an entitlement, refreshing customer information by default.
-  static Future<bool> checkEntitlement(
-    String identifier, {
-    bool forceRefresh = true,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    final result = await checkEntitlementResult(
-      identifier,
-      forceRefresh: forceRefresh,
-      cancellation: cancellation,
-    );
-    return result.isSuccess && (result.data ?? false);
-  }
-
-  /// Typed entitlement verification result.
-  static Future<InappifySdkResult<bool>> checkEntitlementResult(
-    String identifier, {
-    bool forceRefresh = true,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    return _record(
-      await _coordinator.checkEntitlement(
-        InappifyEntitlementCheckRequest(
-          identifier: identifier,
-          forceRefresh: forceRefresh,
-          cancellation: cancellation,
-        ),
-      ),
-    );
-  }
-
-  /// Returns whether the supplied identifier represents an anonymous customer.
   static bool isCustomerAnonymous({required String? appUserIdentifier}) {
     if (_coordinator.state.mobileProtocol == InappifyMobileProtocol.goV2 &&
         appUserIdentifier != null &&
@@ -1081,247 +837,71 @@ class InappifySdk {
   }
 
   /// Stores or removes custom customer attributes.
-  static Future<bool> setAttributes({
-    required List<Attribute> attributes,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    final result = await setAttributesResult(
-      attributes: attributes,
-      cancellation: cancellation,
-    );
-    return result.isSuccess;
-  }
-
-  /// Typed custom-attribute update result.
-  static Future<InappifySdkResult<List<Attribute>>> setAttributesResult({
-    required List<Attribute> attributes,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    return _record(
-      await _coordinator.setAttributes(
-        InappifyAttributesRequest(
-          attributes: attributes,
-          cancellation: cancellation,
-        ),
+  /// Null or empty values delete a key through the durable attribute queue.
+  static Future<bool> setAttributes(Map<String, String?> attributes) async =>
+      (await setAttributesResult(attributes)).isSuccess;
+  static Future<InappifySdkResult<List<Attribute>>> setAttributesResult(
+    Map<String, String?> attributes,
+  ) async => _record(
+    await _coordinator.setAttributes(
+      InappifyAttributesRequest(
+        attributes: attributes.entries
+            .map((entry) => Attribute(key: entry.key, value: entry.value))
+            .toList(),
       ),
-    );
-  }
+    ),
+  );
 
-  /// Updates custom attributes using the Web SDK map-style API.
-  static Future<bool> updateAttributes({
-    required Map<String, String?> values,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return setAttributes(
-      attributes: values.entries
-          .map((entry) => Attribute(key: entry.key, value: entry.value))
-          .toList(growable: false),
-      cancellation: cancellation,
-    );
-  }
-
-  /// Typed map-style custom-attribute update result.
-  static Future<InappifySdkResult<List<Attribute>>> updateAttributesResult({
-    required Map<String, String?> values,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return setAttributesResult(
-      attributes: values.entries
-          .map((entry) => Attribute(key: entry.key, value: entry.value))
-          .toList(growable: false),
-      cancellation: cancellation,
-    );
-  }
-
-  /// Deletes custom attributes by key.
-  static Future<bool> deleteAttributes({
-    required List<String> keys,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    final result = await deleteAttributesResult(
-      keys: keys,
-      cancellation: cancellation,
-    );
-    return result.isSuccess;
-  }
-
-  /// Typed custom-attribute deletion result.
-  static Future<InappifySdkResult<List<Attribute>>> deleteAttributesResult({
-    required List<String> keys,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    return _record(
-      await _coordinator.deleteAttributes(
-        InappifyDeleteAttributesRequest(keys: keys, cancellation: cancellation),
-      ),
-    );
-  }
-
-  /// Stores or removes the reserved customer email attribute.
-  static Future<bool> setEmail({
-    required String email,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return _setReserved(
-      InappifyReservedAttribute.email,
-      email,
-      cancellation: cancellation,
-    );
+  static Future<bool> setEmail(String email) {
+    return _setReserved(InappifyReservedAttribute.email, email);
   }
 
   /// Stores the reserved APNs device token attribute.
-  static Future<bool> setApnsToken({
-    required String apnsToken,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return _setReserved(
-      InappifyReservedAttribute.apnsToken,
-      apnsToken,
-      cancellation: cancellation,
-    );
+  static Future<bool> setApnsToken(String apnsToken) {
+    return _setReserved(InappifyReservedAttribute.apnsToken, apnsToken);
   }
 
-  /// Legacy spelling retained because it is used by existing applications.
-  static Future<bool> setDisplayname({
-    required String displayName,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return _setReserved(
-      InappifyReservedAttribute.displayName,
-      displayName,
-      cancellation: cancellation,
-    );
-  }
-
-  /// Stores the reserved FCM device token attribute.
-  static Future<bool> setFcmToken({
-    required String fcmToken,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return _setReserved(
-      InappifyReservedAttribute.fcmToken,
-      fcmToken,
-      cancellation: cancellation,
-    );
+  /// Stores the reserved FCM token attribute.
+  static Future<bool> setFcmToken(String fcmToken) {
+    return _setReserved(InappifyReservedAttribute.fcmToken, fcmToken);
   }
 
   /// Stores the reserved Apple advertising identifier attribute.
-  static Future<bool> setIdfa({
-    required String idfa,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return _setReserved(
-      InappifyReservedAttribute.idfa,
-      idfa,
-      cancellation: cancellation,
-    );
+  static Future<bool> setIdfa(String idfa) {
+    return _setReserved(InappifyReservedAttribute.idfa, idfa);
   }
 
   /// Stores the reserved Apple vendor identifier attribute.
-  static Future<bool> setIdfv({
-    required String idfv,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return _setReserved(
-      InappifyReservedAttribute.idfv,
-      idfv,
-      cancellation: cancellation,
-    );
+  static Future<bool> setIdfv(String idfv) {
+    return _setReserved(InappifyReservedAttribute.idfv, idfv);
   }
 
   /// Stores the reserved customer IP attribute.
-  static Future<bool> setIp({
-    required String ip,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return _setReserved(
-      InappifyReservedAttribute.ip,
-      ip,
-      cancellation: cancellation,
-    );
+  static Future<bool> setIp(String ip) {
+    return _setReserved(InappifyReservedAttribute.ip, ip);
   }
 
   /// Stores the reserved customer phone-number attribute.
-  static Future<bool> setPhoneNumber({
-    required String phoneNumber,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return _setReserved(
-      InappifyReservedAttribute.phoneNumber,
-      phoneNumber,
-      cancellation: cancellation,
-    );
+  static Future<bool> setPhoneNumber(String phoneNumber) {
+    return _setReserved(InappifyReservedAttribute.phoneNumber, phoneNumber);
   }
 
   /// Stores the reserved acquisition campaign attribute.
-  static Future<bool> setCampaign({
-    required String campaign,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return _setReserved(
-      InappifyReservedAttribute.campaign,
-      campaign,
-      cancellation: cancellation,
-    );
+  static Future<bool> setCampaign(String campaign) {
+    return _setReserved(InappifyReservedAttribute.campaign, campaign);
   }
 
   /// Stores the reserved acquisition keyword attribute.
-  static Future<bool> setKeyword({
-    required String keyword,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return _setReserved(
-      InappifyReservedAttribute.keyword,
-      keyword,
-      cancellation: cancellation,
-    );
+  static Future<bool> setKeyword(String keyword) {
+    return _setReserved(InappifyReservedAttribute.keyword, keyword);
   }
 
   /// Stores the reserved customer display-name attribute.
-  static Future<bool> setDisplayName({
-    required String displayName,
-    InappifyRequestCancellation? cancellation,
-  }) {
-    return _setReserved(
-      InappifyReservedAttribute.displayName,
-      displayName,
-      cancellation: cancellation,
-    );
+  static Future<bool> setDisplayName(String displayName) {
+    return _setReserved(InappifyReservedAttribute.displayName, displayName);
   }
 
-  /// Synchronizes all customer attributes with the selected backend.
-  static Future<bool> syncAttributes({
-    List<Attribute>? attributes,
-    String? idempotencyKey,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    final result = await syncAttributesResult(
-      attributes: attributes,
-      idempotencyKey: idempotencyKey,
-      cancellation: cancellation,
-    );
-    return result.isSuccess;
-  }
-
-  /// Typed full-attribute synchronization result.
-  static Future<InappifySdkResult<List<Attribute>>> syncAttributesResult({
-    List<Attribute>? attributes,
-    String? idempotencyKey,
-    InappifyRequestCancellation? cancellation,
-  }) async {
-    return _record(
-      await _coordinator.syncAttributeValues(
-        InappifyAttributesRequest(
-          attributes:
-              attributes ?? customerInfo?.attributes ?? const <Attribute>[],
-          idempotencyKey: idempotencyKey,
-          cancellation: cancellation,
-        ),
-      ),
-    );
-  }
-
-  /// Returns whether the selected backend permits a reserved attribute key.
+  /// Checks whether a reserved key can be written.
   static Future<bool> canSetReservedAttribute(String key) async {
     final result = await canSetReservedAttributeResult(key);
     return result.isSuccess && (result.data ?? false);
@@ -1448,30 +1028,26 @@ class InappifySdk {
     return result;
   }
 
-  /// Convenience configuration for the default mobile V2 protocol.
-  /// Use [configureResult] when providing a market and its billing public key.
-  static Future<InappifySdkResult<void>> configureGoV2({
-    required String apiKey,
-    String? appUserIdentifier,
-    String? country,
-    String? appVersion,
-    bool enableSubscriptionRecoveryWithoutPayload = true,
-  }) => configureResult(
-    apiKey: apiKey,
-    appUserIdentifier: appUserIdentifier,
-    country: country,
-    appVersion: appVersion,
-    mobileProtocol: InappifyMobileProtocol.goV2,
-    enableSubscriptionRecoveryWithoutPayload:
-        enableSubscriptionRecoveryWithoutPayload,
-  );
+  /// Register before configure; return delivered only after a durable, idempotent grant.
+  /// Pass null to remove the handler. Never call confirmDelivery from the handler.
+  static Future<InappifySdkResult<void>> setConsumableDeliveryHandler(
+    InappifyConsumableDeliveryHandler? handler,
+  ) async => _record(await _coordinator.setConsumableDeliveryHandler(handler));
 
-  /// Reconciles ambiguous/pending purchases; do this before starting a new attempt.
+  /// Only marked InAppify payment-return links trigger native recovery.
+  static Future<InappifySdkResult<bool>> handleDeepLink(String url) async =>
+      _record(await _coordinator.handleDeepLink(url));
+
+  /// Manually checks owned store purchases and interrupted purchase operations.
+  /// Normal startup and foreground recovery are already handled internally on Android.
   static Future<InappifySdkResult<List<PurchaseResult>>>
-  syncPurchases() async => _record(await _coordinator.syncPurchases());
+  syncStorePurchases() async =>
+      _record(await _coordinator.syncStorePurchases());
 
+  /// Restores eligible store purchases after an explicit user action.
   static Future<InappifySdkResult<InappifyRestoreResult>>
-  restorePurchases() async => _record(await _coordinator.restorePurchases());
+  restoreStorePurchases() async =>
+      _record(await _coordinator.restoreStorePurchases());
 
   /// Returns server-authoritative deliveries. Does not grant host inventory.
   static Future<InappifySdkResult<InappifyConsumableSyncResult>>
@@ -1491,14 +1067,6 @@ class InappifySdk {
     InappifyFetchPolicy policy,
   ) async => _record(await _coordinator.offeringsWithPolicy(policy));
 
-  /// Go attributes are write-only. Null/empty removes a key, not the user.
-  static Future<InappifySdkResult<void>> queueAttributes(
-    Map<String, String?> values,
-  ) async => _record(await _coordinator.queueAttributes(values));
-  static Future<InappifySdkResult<void>> flushAttributes() async =>
-      _record(await _coordinator.flushAttributes());
-  static Future<InappifySdkResult<void>> recover() async =>
-      _record(await _coordinator.recover());
   static Future<InappifySdkResult<void>> setNetworkEnabled(
     bool enabled,
   ) async => _record(await _coordinator.setNetworkEnabled(enabled));
@@ -1525,18 +1093,6 @@ class InappifySdk {
       ),
       snapshot: result.snapshot,
     );
-  }
-
-  static bool _isEntitlementActive(EntitlementModel entitlement) {
-    if (entitlement.isActive != true) return false;
-    final expiration = entitlement.expirationDate;
-    if (expiration == null || expiration.isEmpty) return true;
-    final parsed = DateTime.tryParse(expiration);
-    if (_coordinator.state.mobileProtocol == InappifyMobileProtocol.goV2 &&
-        parsed == null) {
-      return false;
-    }
-    return parsed == null || parsed.isAfter(DateTime.now());
   }
 
   static String _nextRequestId(String operation) {

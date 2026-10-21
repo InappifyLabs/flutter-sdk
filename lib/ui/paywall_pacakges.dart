@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:inappify_sdk/helpers/localization_helper.dart';
@@ -12,9 +12,9 @@ import 'package:inappify_sdk/models/paywall_element_states.dart';
 import 'package:inappify_sdk/models/offering_packages.dart';
 import 'package:inappify_sdk/models/paywall_item_tree_state.dart';
 
-/// Emits verbose paywall diagnostics only in debug builds.
+/// Emits structural diagnostics without localized text, URLs or dynamic values.
 void _debugPaywallLog(String message) {
-  if (kDebugMode) debugPrint(message);
+  SdkLogger.verbose('Paywall package event.');
 }
 
 class PaywallPackages extends StatefulWidget {

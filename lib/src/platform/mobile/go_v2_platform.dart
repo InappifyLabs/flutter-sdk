@@ -1,3 +1,4 @@
+import 'package:inappify_sdk/src/logging/sdk_logger.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
@@ -721,11 +722,42 @@ class GoV2Platform extends InappifySdkPlatform {
   @override
   Future<InappifySdkResult<CustomerInfo>> getCustomerInfo(
     InappifyRefreshRequest request,
-  ) => customerInfoWithPolicy(
-    request.force
-        ? InappifyFetchPolicy.networkOnly
-        : InappifyFetchPolicy.cacheFirst,
-  );
+  ) {
+    final policy = request.fetchPolicy;
+    if (policy == null) {
+      return customerInfoWithPolicy(
+        request.force
+            ? InappifyFetchPolicy.networkOnly
+            : InappifyFetchPolicy.cacheFirst,
+      );
+    }
+    if (policy == InappifyCacheFetchPolicy.cacheOnly) {
+      return customerInfoWithPolicy(InappifyFetchPolicy.cacheOnly);
+    }
+    if (policy == InappifyCacheFetchPolicy.fetchCurrent) {
+      return customerInfoWithPolicy(InappifyFetchPolicy.networkOnly);
+    }
+    final cached = snapshot.customerInfo;
+    final fetchedAt = _document['infoFetchedAt'];
+    final age = fetchedAt is int
+        ? _now().millisecondsSinceEpoch - fetchedAt
+        : null;
+    final fresh = age != null && age >= 0 && age < 300000;
+    if (policy == InappifyCacheFetchPolicy.notStaleCachedOrCurrent) {
+      return customerInfoWithPolicy(
+        cached != null && fresh
+            ? InappifyFetchPolicy.cacheOnly
+            : InappifyFetchPolicy.networkOnly,
+      );
+    }
+    if (cached != null) {
+      if (!fresh && backgroundRecovery) {
+        unawaited(customerInfoWithPolicy(InappifyFetchPolicy.networkOnly));
+      }
+      return customerInfoWithPolicy(InappifyFetchPolicy.cacheOnly);
+    }
+    return customerInfoWithPolicy(InappifyFetchPolicy.networkOnly);
+  }
 
   @override
   Future<InappifySdkResult<CustomerInfo>> customerInfoWithPolicy(
@@ -922,7 +954,7 @@ class GoV2Platform extends InappifySdkPlatform {
     }
     return InappifySdkResult.success(
       data:
-          snapshot.customerInfo?.entitlements?.any(
+          snapshot.customerInfo?.entitlements.any(
             (e) => e.identifier == request.identifier && e.isActive == true,
           ) ??
           false,
@@ -1417,19 +1449,19 @@ class GoV2Platform extends InappifySdkPlatform {
       _afterPurchase(_run('confirmDelivery', () => _confirmDirect(deliveryId)));
 
   @override
-  Future<InappifySdkResult<List<PurchaseResult>>> syncPurchases() =>
+  Future<InappifySdkResult<List<PurchaseResult>>> syncStorePurchases() =>
       _afterPurchase(
         _run(
-          'syncPurchases',
+          'syncStorePurchases',
           () async =>
               (await _readDirectPending()).map(_directPurchase).toList(),
         ),
       );
 
   @override
-  Future<InappifySdkResult<InappifyRestoreResult>> restorePurchases() =>
+  Future<InappifySdkResult<InappifyRestoreResult>> restoreStorePurchases() =>
       _afterPurchase(
-        _run('restorePurchases', () async {
+        _run('restoreStorePurchases', () async {
           final deliveries = await _readDirectPending();
           return InappifyRestoreResult.fromMap({
             'restoredCount': 0,
@@ -1453,8 +1485,7 @@ class GoV2Platform extends InappifySdkPlatform {
         : InappifySdkResult.failure(result.failure!, snapshot: snapshot);
   }
 
-  @override
-  Future<InappifySdkResult<void>> recover() => _share(
+  Future<InappifySdkResult<void>> _recover() => _share(
     'recover',
     () => _run('recover', () async {
       if (_logoutPending) await _logout();
@@ -1507,7 +1538,7 @@ class GoV2Platform extends InappifySdkPlatform {
 
   void _scheduleRecovery() {
     if (backgroundRecovery && !_closed && !_identityPending) {
-      unawaited(recover());
+      unawaited(_recover());
     }
   }
 
@@ -1531,6 +1562,7 @@ class GoV2Platform extends InappifySdkPlatform {
     _document = candidate;
     _observeVerifiedTime();
     _revision++;
+    SdkLogger.debug('Verified SDK state updated.');
     _emit();
   }
 
@@ -1553,11 +1585,17 @@ class GoV2Platform extends InappifySdkPlatform {
     final scheduled = _tail.then((_) async {
       try {
         if (_closed) _fail('CONFIGURATION', 'CLIENT_CLOSED');
+        SdkLogger.debug('Starting $operation.');
+        final data = await action();
+        if (const {'configure', 'login', 'logout', 'purchase'}.contains(operation)) {
+          SdkLogger.info('SDK operation $operation returned a successful result.');
+        }
         return InappifySdkResult<T>.success(
-          data: await action(),
+          data: data,
           snapshot: snapshot,
         );
       } on GoV2ProtocolException catch (error) {
+        SdkLogger.error('SDK operation $operation failed.');
         return InappifySdkResult<T>.failure(
           _failure(error, operation),
           snapshot: snapshot,
@@ -1659,6 +1697,9 @@ class GoV2Platform extends InappifySdkPlatform {
         }
       }
     }
+    copy['entitlementEvaluationTimeMillis'] = _trustedClock
+        .now()
+        .millisecondsSinceEpoch;
     return CustomerInfo.fromJson(copy);
   }
 
@@ -1693,6 +1734,7 @@ class GoV2Platform extends InappifySdkPlatform {
     r'$email',
     r'$apnsTokens',
     r'$displayName',
+    r'$ip',
     r'$fcmTokens',
     r'$idfa',
     r'$idfv',

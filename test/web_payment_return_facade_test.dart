@@ -1,3 +1,4 @@
+import 'package:inappify_sdk/models/store_product_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inappify_sdk/inappify_sdk.dart';
 import 'package:inappify_sdk/inappify_sdk_platform_interface.dart';
@@ -111,9 +112,13 @@ void main() {
     expect(await InappifySdk.configure(apiKey: 'public-web-key'), isTrue);
 
     final purchase = await InappifySdk.purchaseResult(
-      productIdentifier: 'premium-monthly',
-      offeringIdentifier: 'main',
-      packageIdentifier: 'monthly',
+      InappifyPurchaseParams(
+        packageToPurchase: PackageModel(
+          identifier: 'monthly',
+          offeringIdentifier: 'main',
+          product: StoreProductModel(identifier: 'premium-monthly'),
+        ),
+      ),
     );
     final checkout = await InappifySdk.createCheckout(
       productIdentifier: 'premium-monthly',

@@ -12,12 +12,11 @@ void main() {
     InappifyOperation.getOfferings,
     InappifyOperation.setAttributes,
     InappifyOperation.setReservedAttribute,
-    InappifyOperation.syncAttributes,
-    InappifyOperation.setTargetingContext,
     InappifyOperation.getCurrentOffering,
-    InappifyOperation.checkEntitlement,
-    InappifyOperation.deleteAttributes,
-    InappifyOperation.syncAttributeValues,
+    InappifyOperation.getOffering,
+    InappifyOperation.syncAttributesAndOfferingsIfNeeded,
+    InappifyOperation.handleDeepLink,
+    InappifyOperation.setConsumableDeliveryHandler,
     InappifyOperation.canSetReservedAttribute,
   };
 
