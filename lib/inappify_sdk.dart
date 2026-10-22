@@ -16,6 +16,8 @@ import 'package:inappify_sdk/models/offering_model.dart';
 import 'package:inappify_sdk/models/offerings_model.dart';
 import 'package:inappify_sdk/models/otp_challenge.dart';
 import 'package:inappify_sdk/models/purchase_result.dart';
+import 'package:inappify_sdk/models/purchase_attempt.dart';
+export 'package:inappify_sdk/models/purchase_attempt.dart';
 import 'package:inappify_sdk/models/validate_discount_code_data.dart';
 import 'package:inappify_sdk/request_cancellation.dart';
 import 'package:inappify_sdk/session_state.dart';
@@ -77,6 +79,11 @@ class InappifySdk {
 
   /// Ordered asynchronous updates emitted by the selected SDK backend.
   static Stream<InappifyPlatformEvent> get events => _coordinator.events;
+
+  /// Live Android purchase/recovery outcomes. Query history after configure for missed events.
+  static Stream<InappifyPurchaseAttempt> get purchaseUpdates => events
+      .where((event) => event.purchaseAttempt != null)
+      .map((event) => event.purchaseAttempt!);
 
   /// Filtered mobile HTTP diagnostics, active only while listened to.
   static Stream<InappifyHttpTrace> get httpTraces => _coordinator.httpTraces;
@@ -723,17 +730,29 @@ class InappifySdk {
   }
 
   /// Validates a discount code for the active customer.
+  /// Web uses [offeringIdentifier] when supplied, otherwise its current offering.
+  /// Android and iOS retain their code-only payment-link behavior.
   static Future<ValidateDiscountCodeData?> getDiscountedPaymentLinks(
-    String discountCode,
-  ) async {
-    final result = await getDiscountedPaymentLinksResult(discountCode);
+    String discountCode, {
+    String? offeringIdentifier,
+  }) async {
+    final result = await getDiscountedPaymentLinksResult(
+      discountCode,
+      offeringIdentifier: offeringIdentifier,
+    );
     return result.isSuccess ? result.data : null;
   }
 
   static Future<InappifySdkResult<ValidateDiscountCodeData>>
-  getDiscountedPaymentLinksResult(String discountCode) async => _record(
+  getDiscountedPaymentLinksResult(
+    String discountCode, {
+    String? offeringIdentifier,
+  }) async => _record(
     await _coordinator.validateDiscountCode(
-      InappifyDiscountCodeRequest(discountCode: discountCode),
+      InappifyDiscountCodeRequest(
+        discountCode: discountCode,
+        offeringIdentifier: offeringIdentifier,
+      ),
     ),
   );
 
@@ -1043,6 +1062,14 @@ class InappifySdk {
   static Future<InappifySdkResult<List<PurchaseResult>>>
   syncStorePurchases() async =>
       _record(await _coordinator.syncStorePurchases());
+
+  /// Reads encrypted native history. Successful null data means unknown, never failed.
+  static Future<InappifySdkResult<InappifyPurchaseAttempt>> getPurchaseAttempt(
+    String attemptId,
+  ) async => _record(await _coordinator.getPurchaseAttempt(attemptId));
+  static Future<InappifySdkResult<List<InappifyPurchaseAttempt>>>
+  getPurchaseAttempts() async =>
+      _record(await _coordinator.getPurchaseAttempts());
 
   /// Restores eligible store purchases after an explicit user action.
   static Future<InappifySdkResult<InappifyRestoreResult>>

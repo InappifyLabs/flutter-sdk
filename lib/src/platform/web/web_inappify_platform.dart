@@ -510,7 +510,7 @@ class WebInappifyPlatform extends InappifySdkPlatform {
       action: () async {
         final requestedIdentifier = request.offeringIdentifier;
         String? offeringIdentifier = requestedIdentifier;
-        if (offeringIdentifier == null || offeringIdentifier.isEmpty) {
+        if (offeringIdentifier == null) {
           final currentRaw = await _bridge.call(
             'getCurrentOffering',
             positionalArguments: request.cancellation == null
@@ -524,7 +524,7 @@ class WebInappifyPlatform extends InappifySdkPlatform {
               : InappifyWebPayloadCodec.offering(currentRaw);
           offeringIdentifier = current?.identifier;
         }
-        if (offeringIdentifier == null || offeringIdentifier.isEmpty) {
+        if (offeringIdentifier == null || offeringIdentifier.trim().isEmpty) {
           throw const _WebSemanticException(
             code: InappifyFailureCode.invalidConfiguration,
           );
@@ -539,7 +539,15 @@ class WebInappifyPlatform extends InappifySdkPlatform {
           cancellation: request.cancellation,
           injectAbortSignal: request.cancellation != null,
         );
-        return InappifyWebPayloadCodec.discountValidation(raw);
+        final result = InappifyWebPayloadCodec.discountValidation(raw);
+        if (requestedIdentifier != null &&
+            result.offering != null &&
+            result.offering!.identifier != requestedIdentifier) {
+          throw const FormatException(
+            'Web discount validation returned a different offering.',
+          );
+        }
+        return result;
       },
       cancellation: request.cancellation,
     );

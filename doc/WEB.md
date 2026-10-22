@@ -2,7 +2,7 @@
 
 The browser adapter delegates an entire session to the external `@inappifylabs/web-sdk` JavaScript provider. Flutter exposes typed customer, offering, authentication and checkout models; the JavaScript instance owns browser transport, credentials, refresh and persistence. The Kotlin SDK is used only on Android.
 
-The Flutter package version is `0.2.0`. The reviewed Web provider baseline is **`@inappifylabs/web-sdk@0.1.0-beta.3`**, an independent version. Do not replace it with `0.1.0` merely to match the Flutter package. Capability negotiation accepts provider versions `0.1.0-beta.3` and later beta builds of `0.1.0`, stable `0.1.0`, or a higher numeric release. Missing, malformed or earlier provider versions are rejected.
+The Flutter package version is `0.2.1`. The reviewed Web provider baseline is **`@inappifylabs/web-sdk@0.1.0-beta.3`**, an independent version. Do not replace it with `0.1.0` merely to match the Flutter package. Capability negotiation accepts provider versions `0.1.0-beta.3` and later beta builds of `0.1.0`, stable `0.1.0`, or a higher numeric release. Missing, malformed or earlier provider versions are rejected.
 
 ## Install the browser bridge before Flutter starts
 
@@ -155,6 +155,34 @@ Future<bool> verifyWebPaymentReturn({String? checkoutId}) async {
 When omitted, the checkout ID is read from pending `sessionStorage`; no pending ID produces a typed failure. `getCheckoutStatus(checkoutId: ...)` performs one authoritative query without polling. `getPendingCheckoutIdResult()` reads the stored correlation. Query-string status, a redirect URL, browser closure or a cancelled poll must never grant access on their own.
 
 An `InappifyRequestCancellation` can cancel supported JS network calls through `AbortController`. Cancellation of observation does not prove that a checkout or identity mutation did not commit. Reconcile uncertain state using the existing checkout or fresh customer state.
+
+## Discount validation for a selected offering
+
+```dart
+final result = await InappifySdk.getDiscountedPaymentLinksResult(
+  discountCode,
+  offeringIdentifier: selectedOffering.identifier,
+);
+final discountedOffering = result.data?.offering;
+// The nullable convenience method accepts the same optional selector.
+final discount = await InappifySdk.getDiscountedPaymentLinks(
+  discountCode,
+  offeringIdentifier: selectedOffering.identifier,
+);
+```
+
+Pass the identifier from the offering selected for your placement. Web forwards it
+unchanged to JavaScript `validateDiscountCode(code, offeringIdentifier)`. If omitted,
+the existing current-offering selection is used. Explicit blank identifiers fail;
+invalid identifiers are rejected by the provider and never retried against a default.
+Validation returns a separate discounted offering without replacing the SDK's
+current offering or catalog. Use its server prices and retain its discount code
+for the existing purchase/checkout flow.
+
+Both methods keep the existing `ValidateDiscountCodeData` response fields:
+`offering`, `code`, `isValid`, `errorCode` and `paymentLinks`, where provided.
+This selector applies to Web; Android/iOS continue their code-only discount-link
+behavior and ignore `offeringIdentifier`.
 
 ## Supported scope and limitations
 

@@ -105,6 +105,8 @@ abstract final class InappifyChannelContract {
 
   static const String httpEventChannelName = 'inappify_sdk/http/v2';
   static const String syncStorePurchases = 'sdkSyncPurchases';
+  static const String getPurchaseAttempt = 'sdkGetPurchaseAttempt';
+  static const String getPurchaseAttempts = 'sdkGetPurchaseAttempts';
   static const String restoreStorePurchases = 'sdkRestorePurchases';
   static const String syncPendingConsumables = 'sdkSyncPendingConsumables';
   static const String confirmDelivery = 'sdkConfirmDelivery';

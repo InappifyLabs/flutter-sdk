@@ -306,6 +306,7 @@ class InappifyV2BridgeTest {
         add(Class.forName("com.inappify.sdk.ConsumableFulfillmentCapableClient"))
       }
       add(Class.forName("com.inappify.sdk.TargetingSyncCapableClient"))
+      add(Class.forName("com.inappify.sdk.PurchaseAttemptCapableClient"))
     }
     val client = Proxy.newProxyInstance(InappifyClient::class.java.classLoader,
       interfaces.toTypedArray()) { _, method, args ->
@@ -323,6 +324,8 @@ class InappifyV2BridgeTest {
         "getDiscountedPaymentLinks" -> InappifyResult.Success(InappifyDiscountCodeResult(isValid = true), snapshot(market = nativeMarket))
         "handleDeepLink" -> args!!.first() == "demo://return?inappify_payment_return=1"
         "syncStorePurchases" -> InappifyResult.Success(if (ownedPurchases) listOf(storePurchase(InappifyStorePurchaseStatus.DELIVERY_REQUIRED, nativeMarket)) else emptyList<InappifyPurchase>(), snapshot(market = nativeMarket))
+        "purchaseAttempt" -> InappifyResult.Success(if (args!!.first() == "attempt-1") trackedAttempt(nativeMarket) else null, snapshot(market = nativeMarket))
+        "purchaseAttempts" -> InappifyResult.Success(listOf(trackedAttempt(nativeMarket)), snapshot(market = nativeMarket))
         "restorePurchasesV2" -> InappifyResult.Success(InappifyRestoreResult(2, 3, 1), snapshot(market = nativeMarket))
         "purchase" -> {
           beforePurchase()
@@ -341,6 +344,8 @@ class InappifyV2BridgeTest {
   }
 
   companion object {
+    private fun trackedAttempt(market: InappifyMarket) = InappifyPurchaseAttempt("attempt-1", "coins", "default", market,
+      InappifyPurchaseAttemptStatus.PENDING, storePurchase(InappifyStorePurchaseStatus.DELIVERY_REQUIRED, market), null, 123L)
     internal val hostVersion = HostApplicationVersion("1.2.0", 12)
     internal val configurePayload = mapOf<String, Any?>("apiKey" to "synthetic-public-key")
     internal val purchasePayload = mapOf<String, Any?>(

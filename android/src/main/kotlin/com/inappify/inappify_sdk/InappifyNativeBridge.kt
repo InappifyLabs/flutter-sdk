@@ -112,6 +112,13 @@ internal class InappifyNativeBridge(
         requestId, client.syncStorePurchases(),
       ) { values -> mapOf("purchases" to values.map(InappifyNativeCodec::purchase)) }
 
+      InappifyChannelContract.GET_PURCHASE_ATTEMPT_METHOD -> result(
+        requestId, client.getPurchaseAttempt(reader.requiredString("attemptId")),
+      ) { value -> value?.let(InappifyNativeCodec::purchaseAttempt) }
+      InappifyChannelContract.GET_PURCHASE_ATTEMPTS_METHOD -> result(
+        requestId, client.getPurchaseAttempts(),
+      ) { values -> mapOf("attempts" to values.map(InappifyNativeCodec::purchaseAttempt)) }
+
       InappifyChannelContract.RESTORE_PURCHASES_METHOD -> result(
         requestId, client.restoreStorePurchases(), InappifyNativeCodec::restore,
       )

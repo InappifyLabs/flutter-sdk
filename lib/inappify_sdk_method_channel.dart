@@ -14,6 +14,7 @@ import 'package:inappify_sdk/models/offering_model.dart';
 import 'package:inappify_sdk/models/offerings_model.dart';
 import 'package:inappify_sdk/models/otp_challenge.dart';
 import 'package:inappify_sdk/models/purchase_result.dart';
+import 'package:inappify_sdk/models/purchase_attempt.dart';
 import 'package:inappify_sdk/models/validate_discount_code_data.dart';
 import 'package:inappify_sdk/src/platform/channel/channel_codec.dart';
 import 'package:inappify_sdk/src/platform/channel/channel_contract.dart';
@@ -88,6 +89,29 @@ class MethodChannelInappifySdk extends InappifySdkPlatform {
           );
         },
       );
+
+  @override
+  Future<InappifySdkResult<InappifyPurchaseAttempt>> getPurchaseAttempt(
+    String attemptId,
+  ) => _invokeResult(
+    method: InappifyChannelContract.getPurchaseAttempt,
+    payload: {'attemptId': attemptId},
+    decodeData: InappifyPurchaseAttempt.fromMap,
+    allowMissingData: true,
+  );
+  @override
+  Future<InappifySdkResult<List<InappifyPurchaseAttempt>>>
+  getPurchaseAttempts() => _invokeResult(
+    method: InappifyChannelContract.getPurchaseAttempts,
+    payload: const {},
+    decodeData: (map) => List.unmodifiable(
+      (map['attempts'] as List).map(
+        (value) => InappifyPurchaseAttempt.fromMap(
+          Map<String, dynamic>.from(value as Map),
+        ),
+      ),
+    ),
+  );
 
   @override
   Future<InappifySdkResult<InappifyRestoreResult>> restoreStorePurchases() =>

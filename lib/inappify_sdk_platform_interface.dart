@@ -9,6 +9,7 @@ import 'package:inappify_sdk/models/offering_model.dart';
 import 'package:inappify_sdk/models/offerings_model.dart';
 import 'package:inappify_sdk/models/otp_challenge.dart';
 import 'package:inappify_sdk/models/purchase_result.dart';
+import 'package:inappify_sdk/models/purchase_attempt.dart';
 import 'package:inappify_sdk/models/validate_discount_code_data.dart';
 import 'package:inappify_sdk/src/platform/contracts/app_version_info.dart';
 import 'package:inappify_sdk/src/platform/contracts/backend_capabilities.dart';
@@ -76,6 +77,11 @@ abstract class InappifySdkPlatform extends PlatformInterface {
 
   Future<InappifySdkResult<List<PurchaseResult>>> syncStorePurchases() async =>
       _unsupported('syncStorePurchases');
+  Future<InappifySdkResult<InappifyPurchaseAttempt>> getPurchaseAttempt(
+    String attemptId,
+  ) async => _unsupported('getPurchaseAttempt');
+  Future<InappifySdkResult<List<InappifyPurchaseAttempt>>>
+  getPurchaseAttempts() async => _unsupported('getPurchaseAttempts');
   Future<InappifySdkResult<InappifyRestoreResult>>
   restoreStorePurchases() async => _unsupported('restoreStorePurchases');
   Future<InappifySdkResult<InappifyConsumableSyncResult>>

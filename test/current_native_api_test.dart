@@ -68,6 +68,20 @@ void main() {
 
   Map payload() => (calls.last.arguments as Map)['payload'] as Map;
 
+  test('Android discount links retain code-only wire input', () async {
+    for (final identifier in [null, 'special']) {
+      final result = await platform.validateDiscountCode(
+        InappifyDiscountCodeRequest(
+          discountCode: 'SAVE20',
+          offeringIdentifier: identifier,
+        ),
+      );
+      expect(result.isSuccess, true);
+      expect(calls.last.method, 'sdkValidateDiscountCode');
+      expect(payload(), {'discountCode': 'SAVE20'});
+    }
+  });
+
   test(
     'store purchase names keep their parameter-free wire contract',
     () async {

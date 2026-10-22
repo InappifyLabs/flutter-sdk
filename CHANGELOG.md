@@ -1,3 +1,21 @@
+## 0.2.1
+
+- Add optional `offeringIdentifier` to both public discount-link methods for Web
+  placement offerings. Preserve current-offering behavior when omitted and reject
+  blank selectors or mismatched returned offerings without catalog changes.
+  Android/iOS keep their existing code-only discount requests and responses.
+
+- Implement iOS `syncAttributesAndOfferingsIfNeeded` through the existing Go V2
+  attribute/offerings queue, persistence and events, with Android's five-call
+  rolling minute quota and current-session cache fallback.
+
+- Include correlated Direct payment/recovery outcomes from the Android backend;
+  subscription/lifetime payment and consumable delivery share the original attempt ID.
+- Forward correlated Android purchase/recovery outcomes through typed
+  `purchaseUpdates` / `event.purchaseAttempt` and native encrypted history queries
+  `getPurchaseAttempt` / `getPurchaseAttempts`. Preserve protocol-v1 event/response
+  compatibility, existing purchase/sync results and native cache ownership.
+
 ## 0.2.0
 
 - Add global RevenueCat-style log levels and custom log handlers, available before

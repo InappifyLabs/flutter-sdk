@@ -2,6 +2,7 @@ import 'package:inappify_sdk/src/platform/channel/channel_contract.dart';
 import 'package:inappify_sdk/src/platform/contracts/platform_event.dart';
 import 'package:inappify_sdk/src/platform/contracts/sdk_failure.dart';
 import 'package:inappify_sdk/src/platform/contracts/sdk_snapshot.dart';
+import 'package:inappify_sdk/models/purchase_attempt.dart';
 
 /// Decoded response envelope returned by a platform bridge.
 class InappifyChannelResponse {
@@ -159,6 +160,19 @@ abstract final class InappifyChannelCodec {
         ) ??
         const <String, dynamic>{};
 
+    final rawAttempt = data['purchaseAttempt'];
+    final attempt = rawAttempt == null
+        ? null
+        : InappifyPurchaseAttempt.fromMap(
+            _requiredMap(rawAttempt, fieldName: 'purchaseAttempt'),
+          );
+    if (attempt != null &&
+        (type != InappifyPlatformEventType.purchaseUpdated ||
+            attempt.attemptId != rawRequestId)) {
+      throw const FormatException(
+        'Purchase event attempt correlation mismatch.',
+      );
+    }
     return InappifyPlatformEvent(
       type: type,
       requestId: rawRequestId as String?,
@@ -166,6 +180,7 @@ abstract final class InappifyChannelCodec {
           ? null
           : InappifySdkSnapshot.fromMap(snapshotMap),
       data: data.cast<String, Object?>(),
+      purchaseAttempt: attempt,
     );
   }
 

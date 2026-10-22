@@ -99,4 +99,30 @@ class CurrentApiBridgeTest {
       assertEquals(url, fake.arguments["handleDeepLink"]!!.single())
     }
   }
+
+  @Test fun purchaseAttemptQueriesKeepIdentityAndDoNotInvokePurchaseOrReconciliation() = runBlocking {
+    session.select(MobileProtocol.GO_V2)
+    val one = invoke("sdkGetPurchaseAttempt", mapOf("attemptId" to "attempt-1"))
+    assertEquals(true, one["ok"])
+    assertEquals("attempt-1", (one["data"] as Map<*, *>)["attemptId"])
+    val unknown = invoke("sdkGetPurchaseAttempt", mapOf("attemptId" to "missing"))
+    assertEquals(true, unknown["ok"]); assertNull(unknown["data"])
+    val all = invoke("sdkGetPurchaseAttempts")
+    assertEquals(1, ((all["data"] as Map<*, *>)["attempts"] as List<*>).size)
+    assertFalse(fake.calls.any { it == "purchase" || it == "syncStorePurchases" })
+    assertTrue("getPurchaseAttempt" in InappifyChannelContract.SUPPORTED_OPERATIONS)
+  }
+
+  @Test fun purchaseEventsCarryTheSameAttemptAndLegacyStateEventsKeepAnEmptyBody() = runBlocking {
+    val tracked = (fake.client.getPurchaseAttempt("attempt-1") as InappifyResult.Success).data!!
+    val constructor = InappifyEvent::class.java.declaredConstructors.first { it.parameterCount == 4 }.apply { isAccessible = true }
+    val event = constructor.newInstance(InappifyEventType.PURCHASE_UPDATED, fake.client.snapshot, tracked.attemptId, tracked) as InappifyEvent
+    val encoded = InappifyNativeCodec.eventEnvelope(event, InappifyV2BridgeTest.hostVersion)
+    assertEquals("attempt-1", encoded["requestId"])
+    val attempt = (encoded["data"] as Map<*, *>)["purchaseAttempt"] as Map<*, *>
+    assertEquals("attempt-1", attempt["attemptId"])
+    assertEquals("attempt-1", ((attempt["purchase"] as Map<*, *>)["mobile"] as Map<*, *>)["idempotencyKey"])
+    val legacy = constructor.newInstance(InappifyEventType.STATE_CHANGED, fake.client.snapshot, null, null) as InappifyEvent
+    assertTrue((InappifyNativeCodec.eventEnvelope(legacy, InappifyV2BridgeTest.hostVersion)["data"] as Map<*, *>).isEmpty())
+  }
 }

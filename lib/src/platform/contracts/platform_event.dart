@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:inappify_sdk/src/platform/contracts/sdk_snapshot.dart';
+import 'package:inappify_sdk/models/purchase_attempt.dart';
 
 /// Asynchronous state changes emitted by JavaScript or native SDKs.
 enum InappifyPlatformEventType {
@@ -23,10 +24,14 @@ class InappifyPlatformEvent {
     this.requestId,
     this.snapshot,
     this.data = const <String, Object?>{},
+    this.purchaseAttempt,
   });
 
   final InappifyPlatformEventType type;
   final String? requestId;
   final InappifySdkSnapshot? snapshot;
   final Map<String, Object?> data;
+
+  /// Present on new Android purchase/recovery events; absent on legacy events.
+  final InappifyPurchaseAttempt? purchaseAttempt;
 }

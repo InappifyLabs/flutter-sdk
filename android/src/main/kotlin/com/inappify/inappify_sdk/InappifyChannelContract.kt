@@ -43,6 +43,8 @@ internal object InappifyChannelContract {
   const val GET_CHECKOUT_STATUS_METHOD = "sdkGetCheckoutStatus"
   const val GET_CONFIGURATION_METHOD = "sdkGetConfiguration"
   const val SYNC_PURCHASES_METHOD = "sdkSyncPurchases"
+  const val GET_PURCHASE_ATTEMPT_METHOD = "sdkGetPurchaseAttempt"
+  const val GET_PURCHASE_ATTEMPTS_METHOD = "sdkGetPurchaseAttempts"
   const val RESTORE_PURCHASES_METHOD = "sdkRestorePurchases"
   const val SYNC_PENDING_CONSUMABLES_METHOD = "sdkSyncPendingConsumables"
   const val CONFIRM_DELIVERY_METHOD = "sdkConfirmDelivery"
@@ -88,6 +90,8 @@ internal object InappifyChannelContract {
     "setConsumableDeliveryHandler",
     "canSetReservedAttribute",
     "syncStorePurchases",
+    "getPurchaseAttempt",
+    "getPurchaseAttempts",
     "restoreStorePurchases",
     "syncPendingConsumables",
     "confirmDelivery",
@@ -127,6 +131,8 @@ internal object InappifyChannelContract {
     SET_DELIVERY_HANDLER_METHOD,
     CAN_SET_RESERVED_ATTRIBUTE_METHOD,
     SYNC_PURCHASES_METHOD,
+    GET_PURCHASE_ATTEMPT_METHOD,
+    GET_PURCHASE_ATTEMPTS_METHOD,
     RESTORE_PURCHASES_METHOD,
     SYNC_PENDING_CONSUMABLES_METHOD,
     CONFIRM_DELIVERY_METHOD,

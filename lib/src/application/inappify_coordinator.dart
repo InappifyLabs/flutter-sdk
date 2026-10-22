@@ -15,6 +15,7 @@ import 'package:inappify_sdk/models/offering_model.dart';
 import 'package:inappify_sdk/models/offerings_model.dart';
 import 'package:inappify_sdk/models/otp_challenge.dart';
 import 'package:inappify_sdk/models/purchase_result.dart';
+import 'package:inappify_sdk/models/purchase_attempt.dart';
 import 'package:inappify_sdk/models/validate_discount_code_data.dart';
 import 'package:inappify_sdk/request_cancellation.dart';
 import 'package:inappify_sdk/src/application/inappify_sdk_state.dart';
@@ -577,6 +578,32 @@ class InappifyCoordinator {
       // customer after a newer login/logout response. Web has no mobile revision.
       final incoming = snapshot?.revision;
       final current = state.revision;
+      if (event.purchaseAttempt != null) {
+        // A purchase response can refresh CustomerInfo before its queued event arrives.
+        // Deliver the outcome for the same accepted identity without restoring older cache state.
+        final sameIdentity =
+            snapshot != null &&
+            snapshot.isConfigured == true &&
+            state.isConfigured == true &&
+            snapshot.isAuthenticated == true &&
+            state.isAuthenticated == true &&
+            snapshot.isLogoutPending != true &&
+            state.isLogoutPending != true &&
+            snapshot.appId != null &&
+            snapshot.appId == state.appId &&
+            snapshot.appUserIdentifier != null &&
+            snapshot.appUserIdentifier == state.appUserIdentifier &&
+            snapshot.market == state.market &&
+            snapshot.market == event.purchaseAttempt!.market &&
+            snapshot.storePlatform == state.storePlatform &&
+            snapshot.mobileProtocol == state.mobileProtocol;
+        if (!sameIdentity) return;
+        if (incoming != null && (current == null || incoming >= current)) {
+          state.apply(snapshot);
+        }
+        _events.add(event);
+        return;
+      }
       if (incoming != null && current != null && incoming < current) return;
       if (snapshot != null) state.apply(snapshot);
       _events.add(event);
@@ -627,6 +654,17 @@ class InappifyCoordinator {
         'syncStorePurchases',
         (platform) => platform.syncStorePurchases(),
       );
+  Future<InappifySdkResult<InappifyPurchaseAttempt>> getPurchaseAttempt(
+    String attemptId,
+  ) => _runMobile(
+    'getPurchaseAttempt',
+    (platform) => platform.getPurchaseAttempt(attemptId),
+  );
+  Future<InappifySdkResult<List<InappifyPurchaseAttempt>>>
+  getPurchaseAttempts() => _runMobile(
+    'getPurchaseAttempts',
+    (platform) => platform.getPurchaseAttempts(),
+  );
   Future<InappifySdkResult<InappifyRestoreResult>> restoreStorePurchases() =>
       _runMobile(
         'restoreStorePurchases',

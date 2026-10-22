@@ -10,6 +10,7 @@ import com.inappify.sdk.InappifyError
 import com.inappify.sdk.InappifyErrorCode
 import com.inappify.sdk.InappifyEvent
 import com.inappify.sdk.InappifyEventType
+import com.inappify.sdk.InappifyPurchaseAttempt
 import com.inappify.sdk.InappifyOffering
 import com.inappify.sdk.InappifyOfferings
 import com.inappify.sdk.InappifyPackage
@@ -125,7 +126,7 @@ internal object InappifyNativeCodec {
     } else {
       null
     },
-    InappifyChannelContract.DATA_KEY to emptyMap<String, Any?>(),
+    InappifyChannelContract.DATA_KEY to (event.purchaseAttempt?.let { mapOf("purchaseAttempt" to purchaseAttempt(it)) } ?: emptyMap<String, Any?>()),
     InappifyChannelContract.SNAPSHOT_KEY to snapshot(event.snapshot, hostVersion),
   )
 
@@ -214,6 +215,20 @@ internal object InappifyNativeCodec {
       "idempotencyKey" to value.attemptId,
       "market" to market(value.market),
     ),
+  )
+
+  fun purchaseAttempt(value: InappifyPurchaseAttempt): Map<String, Any?> = linkedMapOf(
+    "attemptId" to value.attemptId,
+    "productIdentifier" to value.productIdentifier,
+    "offeringIdentifier" to value.offeringIdentifier,
+    "market" to market(value.market),
+    "status" to value.status.name,
+    "updatedAtEpochMillis" to value.updatedAtEpochMillis,
+    "purchase" to value.purchase?.let(::purchase),
+    "error" to value.error?.let { error -> mapOf(
+      "code" to failureCode(error.code), "message" to error.message,
+      "retryable" to error.isRetryable, "details" to codecMap(error.details),
+    ) },
   )
 
   /** Keep marketplace identity intact across snapshots, events and purchase results. */

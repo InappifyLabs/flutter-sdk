@@ -1,4 +1,4 @@
-# Flutter API reference — 0.2.0
+# Flutter API reference — 0.2.1
 
 `InappifySdk` uses a static shared session. Android forwards these methods to the
 current Kotlin client; Flutter owns no second Android purchase/cache pipeline.
@@ -52,6 +52,43 @@ there is no polling timer. Purchase/recovery refreshes and verified cache remain
 native-owned. Entitlement maps are read-only and use Kotlin's trusted clock across
 the bridge. `hasEntitlement`/`getEntitlement` read the latest mirrored state.
 There is no public `checkEntitlement` or boolean force-refresh argument.
+
+## Android purchase outcome tracking
+
+```dart
+final subscription = InappifySdk.purchaseUpdates.listen((attempt) {
+  // attemptId matches the original purchase's idempotencyKey.
+  // Inspect attempt.status, attempt.purchase and attempt.failure.
+});
+// After configure, including after restarting the app:
+final result = await InappifySdk.getPurchaseAttempt('saved-attempt-id');
+if (result.isSuccess && result.data != null) {
+  final attempt = result.data!; // pending / succeeded / failed
+}
+final history = await InappifySdk.getPurchaseAttempts();
+await subscription.cancel();
+```
+
+Both methods return typed `InappifySdkResult` values and read the native encrypted
+history without network/store calls or cache refresh. Successful null lookup data
+means unknown, never failed. Lookup failures must not clear the saved host attempt.
+History is scoped to the configured app/customer/market, survives process/client
+recreation and retains 256 latest terminal results plus up to 256 pending attempts.
+Purchase/recovery events expose the typed outcome in `event.purchaseAttempt` and
+`event.data['purchaseAttempt']`; `event.requestId` equals `attemptId`. Handle
+repeated events idempotently and query history after configure for missed events.
+Old event keys/bodies remain supported. Older/other platform implementations may
+return `unsupportedOperation` for these additive methods without breaking old APIs.
+
+Store recovery and new Direct checkout retain the original logical attempt in
+events/history. Kotlin sends the Direct attempt ID to Laravel, and existing
+automatic recovery checks the bound payment after app restart. Subscription and
+lifetime outcomes use confirmed payment status; consumables await the existing
+delivery acknowledgement. Existing consumable sync/confirm method results keep
+their `direct-delivery-<id>` identity. Legacy payments without an attempt binding
+keep their existing behavior; no product-based association is inferred.
+Neither recorded success nor an empty sync result substitutes for current
+CustomerInfo or an idempotent, durable host consumable grant.
 
 ## Offerings
 
@@ -109,6 +146,11 @@ final retryParams = InappifyPurchaseParams(packageToPurchase: selectedPackage,
   idempotencyKey: sameAttemptId, paywallId: 12, paywallRevision: 3);
 final links = await InappifySdk.getDiscountedPaymentLinks('SALE');
 final typedLinks = await InappifySdk.getDiscountedPaymentLinksResult('SALE');
+// Web: validate for the offering selected for a placement.
+final webLinks = await InappifySdk.getDiscountedPaymentLinks('SALE',
+  offeringIdentifier: selectedOffering.identifier);
+final typedWebLinks = await InappifySdk.getDiscountedPaymentLinksResult('SALE',
+  offeringIdentifier: selectedOffering.identifier);
 await InappifySdk.syncStorePurchases();
 await InappifySdk.restoreStorePurchases();
 await InappifySdk.syncPendingConsumables();
@@ -126,6 +168,14 @@ await InappifySdk.setNetworkEnabled(true);
 
 The package supplies all purchase identifiers/classification. Android supplies its
 Activity. No isCrypto, market/RSA, raw receipt or manual product-type arguments.
+
+`offeringIdentifier` on the two discount methods is optional and selects the Web
+offering only. Omission keeps the current Web offering. A supplied blank or invalid
+identifier never falls back to another offering; validation does not replace the
+current offering or cached catalog. The response remains `ValidateDiscountCodeData`,
+including the discounted `offering`, `code`, `isValid`, `errorCode` and `paymentLinks`
+when supplied by the provider. Android/iOS ignore this selector and retain their
+existing code-only payment-link requests and responses.
 Paywall ID/revision must be positive and supplied together. Retain a key only for
 the same uncertain attempt. The existing Direct/store routes and results are preserved.
 

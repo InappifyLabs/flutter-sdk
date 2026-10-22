@@ -1,6 +1,6 @@
 # Releasing
 
-Flutter package/mobile version `0.2.0` is tagged `v0.2.0`. Android pins the independently published Kotlin SDK's exact corresponding tag. The JavaScript provider version is independent and must not be reset to the Flutter version.
+Flutter package/mobile version `0.2.1` is tagged `v0.2.1`. Android pins the independently published Kotlin SDK's exact corresponding tag. The JavaScript provider version is independent and must not be reset to the Flutter version.
 
 1. Publish and validate the corresponding Kotlin SDK tag on GitHub/JitPack before publishing Flutter. Update `pubspec.yaml`, `goV2SdkVersion`, Android's exact JitPack dependency and version metadata, the podspec version/source tag, relevant expectations, and current installation snippets. Use `major.minor.patch` for stable releases and `major.minor.patch-beta.N` for beta releases.
 2. Run `python3 tool/verify_release.py`, all Flutter tests and static analysis, Android bridge tests, and example builds. On macOS compile the iOS simulator example. Verify the actual resolved native AAR and its release digest; do not substitute a local Maven build when claiming public availability.
@@ -18,7 +18,7 @@ run the project test suites. Commit the reviewed package before publishing.
 
 Run `flutter pub publish` and authenticate with the Google Account that will own
 the package. Review and confirm the upload. After publication, consumers can use
-`inappify_sdk: ^0.2.0`. The first upload can subsequently be transferred to a
+`inappify_sdk: ^0.2.1`. The first upload can subsequently be transferred to a
 verified publisher through pub.dev.
 
 GitHub tags remain available for Git consumers. Pub.dev uploads are made from the

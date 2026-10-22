@@ -39,6 +39,7 @@ class GoV2Platform extends InappifySdkPlatform {
          now ?? DateTime.now,
          monotonicMilliseconds,
        ),
+       _targetingSyncLimiter = _TargetingSyncRateLimiter(monotonicMilliseconds),
        _now = now ?? DateTime.now,
        _anonymousIdFactory = anonymousIdFactory ?? _newAnonymousId,
        _attemptIdFactory = attemptIdFactory ?? _newAttemptId {
@@ -51,6 +52,7 @@ class GoV2Platform extends InappifySdkPlatform {
   final GoV2MetadataProvider _metadataProvider;
   late final GoV2Verifier _verifier;
   final _TrustedGoV2Clock _trustedClock;
+  final _TargetingSyncRateLimiter _targetingSyncLimiter;
   final DateTime Function() _now;
   final String Function() _anonymousIdFactory;
   final String Function() _attemptIdFactory;
@@ -174,6 +176,7 @@ class GoV2Platform extends InappifySdkPlatform {
           InappifyOperation.validateDiscountCode,
           InappifyOperation.getCustomerInfo,
           InappifyOperation.getOfferings,
+          InappifyOperation.syncAttributesAndOfferingsIfNeeded,
           InappifyOperation.setAttributes,
           InappifyOperation.setReservedAttribute,
           InappifyOperation.syncAttributes,
@@ -870,6 +873,29 @@ class GoV2Platform extends InappifySdkPlatform {
     }
     return result;
   }
+
+  @override
+  Future<InappifySdkResult<OfferingsModel>>
+  syncAttributesAndOfferingsIfNeeded() =>
+      _run('syncAttributesAndOfferingsIfNeeded', () async {
+        _requireSession();
+        final retryAfterMillis = _targetingSyncLimiter.acquire();
+        if (retryAfterMillis != null) {
+          final cached = snapshot.offerings;
+          if (cached != null) return cached;
+          throw GoV2ProtocolException(
+            'RATE_LIMIT',
+            'RATE_LIMITED_NO_CACHE',
+            retryable: true,
+            details: {
+              'reason': 'RATE_LIMITED_NO_CACHE',
+              'retryAfterMillis': retryAfterMillis,
+            },
+          );
+        }
+        await _refreshOfferings();
+        return snapshot.offerings!;
+      });
 
   Future<void> _refreshOfferings() async {
     await _flushAttributes();
@@ -1797,6 +1823,30 @@ class GoV2Platform extends InappifySdkPlatform {
       value is Map<String, dynamic> ? value : null;
   static Never _fail(String category, String code) =>
       throw GoV2ProtocolException(category, code);
+}
+
+/// Per-client admission starts survive identity changes, including failures.
+class _TargetingSyncRateLimiter {
+  _TargetingSyncRateLimiter(int Function()? monotonicMilliseconds) {
+    final stopwatch = Stopwatch()..start();
+    _elapsed = monotonicMilliseconds ?? (() => stopwatch.elapsedMilliseconds);
+  }
+
+  late final int Function() _elapsed;
+  final List<int> _starts = [];
+  int? _lastNow;
+
+  int? acquire() {
+    final elapsed = _elapsed();
+    final now = max(_lastNow ?? elapsed, elapsed);
+    _lastNow = now;
+    _starts.removeWhere((start) => now - start >= 60000);
+    if (_starts.length < 5) {
+      _starts.add(now);
+      return null;
+    }
+    return 60000 - (now - _starts.first);
+  }
 }
 
 /// Wall time cannot move behind signed server time or observed monotonic time.
