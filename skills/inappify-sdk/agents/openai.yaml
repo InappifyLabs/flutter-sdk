@@ -1,0 +1,6 @@
+interface:
+  display_name: "Inappify SDK"
+  short_description: "Integrate Flutter, Android, iOS and Web safely"
+  default_prompt: "Use $inappify-sdk to integrate Inappify with the correct API for my installed SDK version and platform."
+policy:
+  allow_implicit_invocation: true

@@ -59,6 +59,7 @@ Android uses the coordinated native `v0.2.1` dependency;
 
 ## Documentation
 
+- [Official agent skill](doc/AGENT_SKILL.md): versioned integration guidance, platform differences and purchase/recovery rules for coding agents.
 - [Getting started](doc/GETTING_STARTED.md): configuration, identity and typed results.
 - [API reference](doc/API_REFERENCE.md): public methods, models, defaults and limits.
 - [Android](doc/ANDROID.md): native bridge and build setup.
@@ -68,6 +69,15 @@ Android uses the coordinated native `v0.2.1` dependency;
 - [Paywalls and targeting](doc/PAYWALLS_AND_TARGETING.md): server selection and UI limitations.
 - [Security and cache](doc/SECURITY_AND_CACHE.md): trust, persistence and diagnostics.
 - [Releasing](doc/RELEASING.md): validation and publication.
+
+Install the official integration skill into your consuming app's coding agent:
+
+```sh
+npx skills add InappifyLabs/flutter-sdk --skill inappify-sdk
+```
+
+Choose the target agent when prompted; see the [installation guide](doc/AGENT_SKILL.md)
+for Codex, Claude Code, Cursor and manual installation.
 
 The repository includes automated contract tests and compile/build checks.
 Real store purchases, subscription renewals and backend deployment still require
