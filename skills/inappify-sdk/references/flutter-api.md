@@ -1,4 +1,4 @@
-# Flutter 0.2.1 public API recipes
+# Flutter 0.2.2 public API recipes
 
 Use `import 'package:inappify_sdk/inappify_sdk.dart';`. All calls below are static.
 Examples are independent API demonstrations, not a script to execute every call
@@ -93,7 +93,7 @@ Future<void> customerExamples() async {
 }
 ```
 
-`getCustomerInfo(fetchPolicy: ...)` is the nullable companion. Mobile policies:
+`getCustomerInfo(fetchPolicy: ...)` is the nullable companion. All three platforms:
 
 | Policy | Contract |
 | --- | --- |
@@ -102,9 +102,12 @@ Future<void> customerExamples() async {
 | `fetchCurrent` | Wait for server; no stale success fallback on failure |
 | `notStaleCachedOrCurrent` | Fresh cache or wait for server; no stale fallback |
 
-Flutter Web 0.2.1 does **not** forward these modes; it calls the JS provider's
-default network fetch. Do not promise offline `cacheOnly` there. Direct JS has
-four working policies with different enum spelling and default; see [Web](web.md).
+Flutter Web 0.2.2 forwards these modes to provider 0.2.0+, including the explicit
+`CACHED_OR_FETCHED` default. `cacheOnly` never waits for pending HTTP. Check typed
+failure `details['serverCode']` for `CACHE_MISS` and `RATE_LIMITED_NO_CACHE`.
+Flutter 0.2.1 did not forward policies on Web; do not promise the newer behavior
+on that historical version. Direct JS has different enum spelling and defaults;
+see [Web](web.md).
 
 `hasEntitlement`, `isActiveEntitlement`, `getEntitlement` read the latest mirrored
 state synchronously; they do not request the server. Fetch fresh CustomerInfo

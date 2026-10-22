@@ -261,6 +261,21 @@ class InappifyCoordinator {
     InappifyCacheFetchPolicy? fetchPolicy,
     InappifyRequestCancellation? cancellation,
   }) {
+    // A Web cache-only read must not join the serialized network/mutation tail.
+    // The provider owns session-bound cache lookup and never performs HTTP here.
+    if (fetchPolicy == InappifyCacheFetchPolicy.cacheOnly &&
+        _selectedCapabilities?.backendKind ==
+            InappifyBackendKind.webJavaScript) {
+      return _execute<CustomerInfo>(
+        (platform) => platform.getCustomerInfo(
+          InappifyRefreshRequest(
+            fetchPolicy: fetchPolicy,
+            cancellation: cancellation,
+          ),
+        ),
+        operationName: 'getCustomerInfo',
+      );
+    }
     return _run<CustomerInfo>(
       (platform) => platform.getCustomerInfo(
         InappifyRefreshRequest(
@@ -444,6 +459,11 @@ class InappifyCoordinator {
       }
       final snapshot = result.snapshot;
       if (snapshot != null &&
+          (_selectedCapabilities?.backendKind !=
+                  InappifyBackendKind.webJavaScript ||
+              snapshot.revision == null ||
+              state.revision == null ||
+              snapshot.revision! >= state.revision!) &&
           !(operationName == 'restoreCachedSession' &&
               (!result.isSuccess || result.data != true))) {
         state.apply(snapshot);
@@ -553,6 +573,20 @@ class InappifyCoordinator {
 
   void _handleEvent(InappifyPlatformEvent event, InappifySdkPlatform source) {
     final barrier = event.snapshot;
+    // Provider background refreshes must reach the Web mirror immediately,
+    // including while an unrelated network operation is pending. Adapter
+    // revisions prevent an older queued snapshot from restoring prior state.
+    if (barrier != null &&
+        identical(source, _selectedPlatform) &&
+        _selectedCapabilities?.backendKind ==
+            InappifyBackendKind.webJavaScript &&
+        barrier.revision != null) {
+      if (state.revision == null || barrier.revision! >= state.revision!) {
+        state.apply(barrier);
+        _events.add(event);
+      }
+      return;
+    }
     // A Go lifecycle attempt revokes local access before its HTTP finishes.
     // Do not queue this restrictive snapshot behind that same network operation.
     // Positive snapshots, V1 and Web keep their existing serialized ordering.
@@ -621,6 +655,8 @@ class InappifyCoordinator {
     _httpSubscription = null;
     _selectedCapabilities = null;
     _mobileProtocol = null;
+    // Revisions are scoped to the selected owner, never to a later test client.
+    state.revision = null;
     _configureOperations.clear();
     _operationTail = Future<void>.value();
   }

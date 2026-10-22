@@ -1,4 +1,4 @@
-# Flutter API reference — 0.2.1
+# Flutter API reference — 0.2.2
 
 `InappifySdk` uses a static shared session. Android forwards these methods to the
 current Kotlin client; Flutter owns no second Android purchase/cache pipeline.
@@ -40,7 +40,7 @@ final localAlias = InappifySdk.isActiveEntitlement('premium');
 final localRight = InappifySdk.getEntitlement('premium');
 ```
 
-| Android policy | Behavior |
+| CustomerInfo policy (Android, iOS and Web) | Behavior |
 | --- | --- |
 | `cachedOrFetched` (default) | Return cache immediately; refresh stale cache in the background; fetch when absent |
 | `cacheOnly` | Verified cache or an error; no network |
@@ -110,7 +110,10 @@ fetches fresh offerings. The Kotlin client permits five admitted calls per rolli
 60 seconds. Extra calls return session cache, or RATE_LIMITED_NO_CACHE when absent;
 failed admitted calls count. Identity changes do not reset the client quota.
 Normal Offering reads retain native five-minute foreground refresh and thirty-second
-error backoff. Combined sync is a native Android capability.
+error backoff. Combined sync also works on iOS and Flutter Web. Web requires
+provider 0.2.0+, fetches customer data before fresh offerings and delegates the
+same five-admission quota to that provider; it does not upload attributes again.
+See [Web policies, error details and browser tests](WEB.md#customerinfo-policies).
 
 ## Attributes
 

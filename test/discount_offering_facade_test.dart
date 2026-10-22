@@ -197,7 +197,7 @@ class _DiscountBridge implements InappifyWebBridge {
   @override
   bool get isAvailable => true;
   @override
-  String get sdkVersion => '0.1.0';
+  String get sdkVersion => '0.2.0';
   @override
   Stream<InappifyWebBridgeEvent> get events => const Stream.empty();
   @override

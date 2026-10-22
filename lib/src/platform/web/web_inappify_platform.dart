@@ -9,6 +9,7 @@ import 'package:inappify_sdk/models/checkout_result.dart';
 import 'package:inappify_sdk/models/customer_info.dart';
 import 'package:inappify_sdk/models/enums/purchase_status.dart';
 import 'package:inappify_sdk/models/inappify_configuration.dart';
+import 'package:inappify_sdk/models/mobile_v2.dart';
 import 'package:inappify_sdk/models/offering_model.dart';
 import 'package:inappify_sdk/models/offerings_model.dart';
 import 'package:inappify_sdk/models/otp_challenge.dart';
@@ -91,7 +92,17 @@ class WebInappifyPlatform extends InappifySdkPlatform {
       InappifySessionPersistenceMode.unknown;
   Map<String, Object?>? _configuredOptions;
   int _sessionStateRevision = 0;
-  int _directOperationDepth = 0;
+  int _identityRevision = 0;
+  int _customerReadRevision = 0;
+  int _customerMirrorRevision = 0;
+  int _snapshotRevision = 0;
+
+  bool get _supportsTargetingSync =>
+      _supportsSafeSessionContract(_bridge.sdkVersion) &&
+      (_bridge is! InappifyWebProviderCapabilities ||
+          (_bridge as InappifyWebProviderCapabilities).supportsMethod(
+            'syncAttributesAndOfferingsIfNeeded',
+          ));
 
   @override
   Stream<InappifyPlatformEvent> get events => _eventController.stream;
@@ -108,7 +119,11 @@ class WebInappifyPlatform extends InappifySdkPlatform {
       backendKind: InappifyBackendKind.webJavaScript,
       protocolVersion: InappifyBackendCapabilities.currentProtocolVersion,
       ownsSession: true,
-      supportedOperations: _supportedOperations,
+      supportedOperations: <InappifyOperation>{
+        ..._supportedOperations,
+        if (_supportsTargetingSync)
+          InappifyOperation.syncAttributesAndOfferingsIfNeeded,
+      },
       sdkVersion: _bridge.sdkVersion,
     );
   }
@@ -154,6 +169,7 @@ class WebInappifyPlatform extends InappifySdkPlatform {
       action: () async {
         final replacesConfiguredApp = _configured && _apiKey != apiKey;
         await _bridge.configure(options);
+        _identityRevision += 1;
         _customerInfo = null;
         _offerings = null;
         _appId = null;
@@ -564,25 +580,95 @@ class WebInappifyPlatform extends InappifySdkPlatform {
     return _run<CustomerInfo>(
       'getCustomerInfo',
       action: () async {
+        final identityRevision = _identityRevision;
+        final mirrorRevision = _customerMirrorRevision;
+        final policy =
+            request.fetchPolicy ??
+            (request.force
+                ? InappifyCacheFetchPolicy.fetchCurrent
+                : InappifyCacheFetchPolicy.cachedOrFetched);
+        final readRevision = policy == InappifyCacheFetchPolicy.cacheOnly
+            ? _customerReadRevision
+            : ++_customerReadRevision;
         try {
           final raw = await _bridge.call(
             'getCustomerInfo',
-            positionalArguments: cancellation == null
-                ? const <Object?>[]
-                : const <Object?>[<String, Object?>{}],
+            positionalArguments: <Object?>[
+              _customerFetchPolicy(policy),
+              const <String, Object?>{},
+            ],
             cancellation: cancellation,
             injectAbortSignal: cancellation != null,
           );
           final customer = InappifyWebPayloadCodec.customerInfo(raw);
-          _customerInfo = customer;
+          if (identityRevision != _identityRevision ||
+              (policy != InappifyCacheFetchPolicy.cacheOnly &&
+                  readRevision != _customerReadRevision)) {
+            throw const InappifyWebBridgeException(
+              code: 'CUSTOMER_INFO_REQUEST_SUPERSEDED',
+              kind: 'configuration',
+            );
+          }
+          // An event may have published a newer background result before the
+          // cached Promise crossed the bridge. Keep that newer mirror.
+          if (mirrorRevision == _customerMirrorRevision) {
+            _customerInfo = customer;
+            _customerMirrorRevision += 1;
+          }
           _failedToLoadCustomerInfo = false;
           return customer;
         } catch (_) {
-          _failedToLoadCustomerInfo = true;
+          if (identityRevision == _identityRevision &&
+              readRevision == _customerReadRevision) {
+            _failedToLoadCustomerInfo = true;
+          }
           rethrow;
         }
       },
       cancellation: cancellation,
+    );
+  }
+
+  @override
+  Future<InappifySdkResult<OfferingsModel>>
+  syncAttributesAndOfferingsIfNeeded() {
+    if (!_supportsTargetingSync) {
+      return Future.value(
+        InappifySdkResult<OfferingsModel>.failure(
+          InappifyFailure.unsupported('syncAttributesAndOfferingsIfNeeded'),
+          snapshot: _snapshot,
+        ),
+      );
+    }
+    return _run<OfferingsModel>(
+      'syncAttributesAndOfferingsIfNeeded',
+      action: () async {
+        final identityRevision = _identityRevision;
+        try {
+          final raw = await _bridge.call('syncAttributesAndOfferingsIfNeeded');
+          if (identityRevision != _identityRevision) {
+            throw const InappifyWebBridgeException(
+              code: 'CUSTOMER_INFO_REQUEST_SUPERSEDED',
+              kind: 'configuration',
+            );
+          }
+          final offerings = InappifyWebPayloadCodec.offerings(raw);
+          _commitOfferings(offerings);
+          _failedToLoadOfferings = false;
+          return offerings;
+        } catch (_) {
+          if (identityRevision == _identityRevision) {
+            _failedToLoadOfferings = true;
+          }
+          rethrow;
+        } finally {
+          // This also keeps a successful customer refresh when the following
+          // offerings read fails. Never fetch again or fall back to success.
+          if (identityRevision == _identityRevision) {
+            _readCustomerPropertyBestEffort();
+          }
+        }
+      },
     );
   }
 
@@ -866,7 +952,13 @@ class WebInappifyPlatform extends InappifySdkPlatform {
       'syncAttributes',
       action: () async {
         if (_customerInfo == null) {
-          final raw = await _bridge.call('getCustomerInfo');
+          final raw = await _bridge.call(
+            'getCustomerInfo',
+            positionalArguments: const <Object?>[
+              'FETCH_CURRENT',
+              <String, Object?>{},
+            ],
+          );
           _customerInfo = InappifyWebPayloadCodec.customerInfo(raw);
           _failedToLoadCustomerInfo = false;
         }
@@ -1012,13 +1104,7 @@ class WebInappifyPlatform extends InappifySdkPlatform {
       return _failure<T>(operation, InappifyFailureCode.notConfigured);
     }
     try {
-      T? value;
-      _directOperationDepth += 1;
-      try {
-        value = await action();
-      } finally {
-        _directOperationDepth -= 1;
-      }
+      final value = await action();
       return InappifySdkResult<T>.success(data: value, snapshot: _snapshot);
     } catch (error) {
       if (cancellation?.isCancelled ?? false) {
@@ -1208,9 +1294,16 @@ class WebInappifyPlatform extends InappifySdkPlatform {
             code == InappifyFailureCode.network ||
             code == InappifyFailureCode.timeout ||
             code == InappifyFailureCode.sessionTemporarilyUnavailable ||
-            code == InappifyFailureCode.storageUnavailable,
+            code == InappifyFailureCode.storageUnavailable ||
+            normalizedCode == 'rate_limited_no_cache',
         details: <String, Object?>{
           'operation': operation,
+          'serverCode': error.code,
+          if (normalizedCode == 'rate_limited_no_cache' &&
+              error.retryAfterMillis != null &&
+              error.retryAfterMillis! >= 0 &&
+              error.retryAfterMillis! <= 9007199254740991)
+            'retryAfterMillis': error.retryAfterMillis,
           if (status != null) 'status': status,
           if (error.requestId != null) 'requestId': error.requestId,
           if (kind != null) 'kind': kind,
@@ -1277,6 +1370,7 @@ class WebInappifyPlatform extends InappifySdkPlatform {
     bool injectAbortSignal = false,
   }) async {
     final revisionBeforeCall = _sessionStateRevision;
+    _identityRevision += 1;
     try {
       return await _bridge.call(
         method,
@@ -1318,6 +1412,7 @@ class WebInappifyPlatform extends InappifySdkPlatform {
         ? null
         : InappifyWebPayloadCodec.customerInfo(raw);
     _customerInfo = decoded;
+    _customerMirrorRevision += 1;
   }
 
   void _readCustomerPropertyBestEffort() {
@@ -1492,12 +1587,15 @@ class WebInappifyPlatform extends InappifySdkPlatform {
         _customerInfo = event.payload == null
             ? null
             : InappifyWebPayloadCodec.customerInfo(event.payload);
+        _customerMirrorRevision += 1;
+        _failedToLoadCustomerInfo = false;
       } else if (type == InappifyPlatformEventType.offeringsChanged) {
         if (event.payload == null) {
           _offerings = null;
         } else {
           _commitOfferings(InappifyWebPayloadCodec.offerings(event.payload));
         }
+        _failedToLoadOfferings = false;
       } else if (type == InappifyPlatformEventType.sessionStateChanged) {
         final change = InappifySessionStateChange.fromMap(
           InappifyWebPayloadCodec.requiredMap(
@@ -1505,19 +1603,27 @@ class WebInappifyPlatform extends InappifySdkPlatform {
             field: 'sessionStateChanged',
           ),
         );
+        if ((change.state == InappifySessionState.anonymous ||
+                change.state == InappifySessionState.authenticated) &&
+            _sessionState != InappifySessionState.refreshing) {
+          // The provider publishes replacement credentials before refreshing
+          // its caches. Do not expose the preceding customer's mirror during
+          // that interval. Token rotation remains the same customer.
+          _identityRevision += 1;
+          _customerInfo = null;
+          _offerings = null;
+          _customerMirrorRevision += 1;
+        }
         _sessionState = change.state;
         _sessionStateRevision += 1;
         data = change.toMap();
       } else if (event.payload != null) {
+        _identityRevision += 1;
         data = InappifyWebPayloadCodec.authentication(event.payload).toMap();
         _readCustomerPropertyBestEffort();
       }
       _eventController.add(
-        InappifyPlatformEvent(
-          type: type,
-          snapshot: _directOperationDepth == 0 ? _snapshot : null,
-          data: data,
-        ),
+        InappifyPlatformEvent(type: type, snapshot: _snapshot, data: data),
       );
     } catch (_) {
       // Malformed external events are ignored; direct operations remain the
@@ -1577,6 +1683,7 @@ class WebInappifyPlatform extends InappifySdkPlatform {
   }
 
   InappifySdkSnapshot get _snapshot => InappifySdkSnapshot(
+    revision: ++_snapshotRevision,
     accessToken: null,
     apiKey: _apiKey,
     customerInfo: _customerInfo,
@@ -1616,8 +1723,16 @@ bool _sameConfiguration(
   return true;
 }
 
-/// beta.3 is the first reviewed Web build that preserves authenticated
-/// sessions across transient refresh and IndexedDB failures.
+String _customerFetchPolicy(InappifyCacheFetchPolicy policy) =>
+    switch (policy) {
+      InappifyCacheFetchPolicy.cacheOnly => 'CACHE_ONLY',
+      InappifyCacheFetchPolicy.fetchCurrent => 'FETCH_CURRENT',
+      InappifyCacheFetchPolicy.notStaleCachedOrCurrent =>
+        'NOT_STALE_CACHED_OR_CURRENT',
+      InappifyCacheFetchPolicy.cachedOrFetched => 'CACHED_OR_FETCHED',
+    };
+
+/// 0.2.0 supplies the policy overload and the combined targeting sync contract.
 bool _supportsSafeSessionContract(String? version) {
   if (version == null) return false;
   final match = RegExp(
@@ -1629,15 +1744,12 @@ bool _supportsSafeSessionContract(String? version) {
     int.parse(match.group(2)!),
     int.parse(match.group(3)!),
   ];
-  const minimum = <int>[0, 1, 0];
+  const minimum = <int>[0, 2, 0];
   for (var index = 0; index < parts.length; index += 1) {
     if (parts[index] > minimum[index]) return true;
     if (parts[index] < minimum[index]) return false;
   }
-  final prerelease = match.group(4);
-  if (prerelease == null) return true;
-  final beta = RegExp(r'^beta\.(\d+)$').firstMatch(prerelease);
-  return beta != null && int.parse(beta.group(1)!) >= 3;
+  return match.group(4) == null;
 }
 
 class _WebSemanticException implements Exception {

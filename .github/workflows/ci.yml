@@ -21,6 +21,11 @@ jobs:
           cache: true
       - name: Resolve dependencies
         run: flutter pub get
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare published Web provider fixture
+        run: node tool/prepare_web_provider_test.mjs
       - name: Verify release versions
         shell: bash
         run: |
@@ -29,6 +34,8 @@ jobs:
         run: flutter analyze --no-fatal-infos
       - name: Test SDK
         run: flutter test
+      - name: Test Web bridge with published provider in Chrome
+        run: flutter test --platform chrome test/web_provider_contract_browser_test.dart test/web_registration_smoke_test.dart
       - name: Test example
         working-directory: example
         run: flutter test

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:inappify_sdk/models/attribute.dart';
 import 'package:inappify_sdk/models/enums/market.dart';
 import 'package:inappify_sdk/models/enums/purchase_status.dart';
+import 'package:inappify_sdk/models/mobile_v2.dart';
 import 'package:inappify_sdk/request_cancellation.dart';
 import 'package:inappify_sdk/session_state.dart';
 import 'package:inappify_sdk/src/platform/contracts/backend_capabilities.dart';
@@ -51,12 +52,12 @@ void main() {
     test(
       'advertises the complete documented Web lifecycle when available',
       () async {
-        bridge.version = '0.1.0-beta.3';
+        bridge.version = '0.2.0';
 
         final capabilities = await platform.getCapabilities();
 
         expect(capabilities.backendKind, InappifyBackendKind.webJavaScript);
-        expect(capabilities.sdkVersion, '0.1.0-beta.3');
+        expect(capabilities.sdkVersion, '0.2.0');
         expect(capabilities.supportsCompleteLifecycle, isTrue);
         expect(
           capabilities.supportedOperations,
@@ -68,30 +69,36 @@ void main() {
             InappifyOperation.handlePaymentReturn,
             InappifyOperation.createCheckout,
             InappifyOperation.getCheckoutStatus,
+            InappifyOperation.syncAttributesAndOfferingsIfNeeded,
           }),
         );
       },
     );
 
     test(
-      'rejects Web SDK builds older than the safe beta.3 contract',
+      'rejects Web SDK builds older than the 0.2.0 policy contract',
       () async {
-        bridge.version = '0.1.0-beta.2';
-
-        final capabilities = await platform.getCapabilities();
-
-        expect(capabilities.ownsSession, isFalse);
-        expect(capabilities.supportsCompleteLifecycle, isFalse);
+        for (final version in <String?>[
+          null,
+          'invalid',
+          '0.1.0-beta.2',
+          '0.1.0',
+          '0.2.0-beta.1',
+        ]) {
+          bridge.version = version;
+          final capabilities = await platform.getCapabilities();
+          expect(capabilities.ownsSession, isFalse, reason: version);
+          expect(
+            capabilities.supportsCompleteLifecycle,
+            isFalse,
+            reason: version,
+          );
+        }
       },
     );
 
-    test('accepts beta.3 and later safe session contracts', () async {
-      for (final version in <String>[
-        '0.1.0-beta.3',
-        '0.1.0-beta.4',
-        '0.1.0',
-        '0.2.0-beta.1',
-      ]) {
+    test('accepts 0.2.0 and newer session contracts', () async {
+      for (final version in <String>['0.2.0', '0.2.1', '1.0.0']) {
         bridge.version = version;
         final capabilities = await platform.getCapabilities();
         expect(capabilities.ownsSession, isTrue, reason: version);
@@ -317,6 +324,202 @@ void main() {
       expect(result.failure?.code, InappifyFailureCode.notConfigured);
       expect(bridge.calls, isEmpty);
     });
+  });
+
+  group('Web 0.2.0 customer policies and targeting sync', () {
+    test(
+      'does not advertise a method absent from the actual provider',
+      () async {
+        bridge.hasTargetingSync = false;
+        final capabilities = await platform.getCapabilities();
+        expect(
+          capabilities.supportedOperations,
+          isNot(contains(InappifyOperation.syncAttributesAndOfferingsIfNeeded)),
+        );
+        await _configure(platform);
+        bridge.calls.clear();
+        final result = await platform.syncAttributesAndOfferingsIfNeeded();
+        expect(result.failure?.code, InappifyFailureCode.unsupportedOperation);
+        expect(bridge.calls, isEmpty);
+      },
+    );
+    for (final entry in <InappifyCacheFetchPolicy, String>{
+      InappifyCacheFetchPolicy.cacheOnly: 'CACHE_ONLY',
+      InappifyCacheFetchPolicy.fetchCurrent: 'FETCH_CURRENT',
+      InappifyCacheFetchPolicy.notStaleCachedOrCurrent:
+          'NOT_STALE_CACHED_OR_CURRENT',
+      InappifyCacheFetchPolicy.cachedOrFetched: 'CACHED_OR_FETCHED',
+    }.entries) {
+      test(
+        'forwards ${entry.value} and cancellation as the second argument',
+        () async {
+          await _configure(platform);
+          bridge.calls.clear();
+          bridge.callResponses['getCustomerInfo'] = _customerPayload();
+          final cancellation = InappifyRequestCancellation();
+          final result = await platform.getCustomerInfo(
+            InappifyRefreshRequest(
+              fetchPolicy: entry.key,
+              cancellation: cancellation,
+            ),
+          );
+          expect(result.isSuccess, isTrue);
+          expect(bridge.calls.single.positionalArguments, <Object?>[
+            entry.value,
+            <String, Object?>{},
+          ]);
+          expect(bridge.calls.single.injectAbortSignal, isTrue);
+          expect(bridge.calls.single.cancellation, same(cancellation));
+        },
+      );
+    }
+
+    test(
+      'default is explicit CACHED_OR_FETCHED; internal forced read stays fresh',
+      () async {
+        await _configure(platform);
+        bridge.calls.clear();
+        bridge.callResponses['getCustomerInfo'] = _customerPayload();
+        await platform.getCustomerInfo(const InappifyRefreshRequest());
+        await platform.getCustomerInfo(
+          const InappifyRefreshRequest(force: true),
+        );
+        expect(
+          bridge.calls.map((call) => call.positionalArguments.first),
+          <String>['CACHED_OR_FETCHED', 'FETCH_CURRENT'],
+        );
+      },
+    );
+
+    test(
+      'delegates combined sync once and preserves partial success on failure',
+      () async {
+        final configured = await _configure(platform);
+        bridge.calls.clear();
+        bridge.callHandlers['syncAttributesAndOfferingsIfNeeded'] = (_) {
+          bridge.properties['customerInfo'] = _customerPayload(
+            attributes: <String, Object?>{'language': 'ar'},
+          );
+          throw const InappifyWebBridgeException(
+            code: 'NETWORK_ERROR',
+            kind: 'network',
+          );
+        };
+        final failed = await platform.syncAttributesAndOfferingsIfNeeded();
+        expect(failed.isSuccess, isFalse);
+        expect(
+          failed.snapshot?.offerings,
+          same(configured.snapshot?.offerings),
+        );
+        expect(failed.snapshot?.customerInfo?.attributes?.single.value, 'ar');
+        expect(
+          bridge.calls.single.method,
+          'syncAttributesAndOfferingsIfNeeded',
+        );
+
+        bridge.callHandlers.remove('syncAttributesAndOfferingsIfNeeded');
+        bridge.callResponses['syncAttributesAndOfferingsIfNeeded'] =
+            _offeringsPayload(forceVersion: 9);
+        final succeeded = await platform.syncAttributesAndOfferingsIfNeeded();
+        expect(succeeded.isSuccess, isTrue);
+        expect(succeeded.data?.forceVersion, 9);
+        expect(succeeded.snapshot?.offerings, same(succeeded.data));
+      },
+    );
+
+    test(
+      'retains server codes and only valid allowlisted retry timing',
+      () async {
+        await _configure(platform);
+        for (final delay in <int?>[59000, -1, null]) {
+          bridge.callHandlers['syncAttributesAndOfferingsIfNeeded'] = (_) {
+            throw InappifyWebBridgeException(
+              code: 'RATE_LIMITED_NO_CACHE',
+              kind: 'configuration',
+              retryAfterMillis: delay,
+            );
+          };
+          final result = await platform.syncAttributesAndOfferingsIfNeeded();
+          expect(result.isSuccess, isFalse);
+          expect(
+            result.failure?.details['serverCode'],
+            'RATE_LIMITED_NO_CACHE',
+          );
+          expect(result.failure?.isRetryable, isTrue);
+          expect(
+            result.failure?.details['retryAfterMillis'],
+            delay != null && delay >= 0 ? delay : null,
+          );
+        }
+        bridge.callHandlers['getCustomerInfo'] = (_) =>
+            throw const InappifyWebBridgeException(
+              code: 'CACHE_MISS',
+              kind: 'configuration',
+            );
+        final missing = await platform.getCustomerInfo(
+          const InappifyRefreshRequest(
+            fetchPolicy: InappifyCacheFetchPolicy.cacheOnly,
+          ),
+        );
+        expect(missing.failure?.details['serverCode'], 'CACHE_MISS');
+      },
+    );
+
+    test(
+      'does not replace a newer event with a late cached response',
+      () async {
+        await _configure(platform);
+        final pending = Completer<Object?>();
+        bridge.callHandlers['getCustomerInfo'] = (_) => pending.future;
+        final result = platform.getCustomerInfo(const InappifyRefreshRequest());
+        bridge.emit(
+          InappifyWebBridgeEvent(
+            name: 'customerInfoUpdated',
+            payload: _customerPayload(
+              attributes: <String, Object?>{'language': 'fresh'},
+            ),
+          ),
+        );
+        pending.complete(_customerPayload());
+        expect(
+          (await result).snapshot?.customerInfo?.attributes?.single.value,
+          'fresh',
+        );
+      },
+    );
+
+    test(
+      'does not commit a read superseded by an identity replacement',
+      () async {
+        await _configure(platform);
+        final pending = Completer<Object?>();
+        bridge.callHandlers['getCustomerInfo'] = (_) => pending.future;
+        final result = platform.getCustomerInfo(
+          const InappifyRefreshRequest(
+            fetchPolicy: InappifyCacheFetchPolicy.fetchCurrent,
+          ),
+        );
+        bridge.emit(
+          const InappifyWebBridgeEvent(
+            name: 'sessionStateChanged',
+            payload: <String, Object?>{
+              'state': 'authenticated',
+              'retryable': false,
+            },
+          ),
+        );
+        bridge.emit(
+          InappifyWebBridgeEvent(
+            name: 'customerInfoUpdated',
+            payload: _customerPayload(customerId: 'new-account'),
+          ),
+        );
+        pending.complete(_customerPayload());
+        final late = await result;
+        expect(late.isSuccess, isFalse);
+        expect(late.snapshot?.customerInfo?.originalAppUserId, 'new-account');
+      },
+    );
   });
 
   group('identity and OTP', () {
@@ -1449,6 +1652,7 @@ void main() {
       expect(result.failure?.isRetryable, isTrue);
       expect(result.failure?.details, <String, Object?>{
         'operation': 'getCustomerInfo',
+        'serverCode': 'network_error',
         'status': 503,
         'requestId': 'safe-request-id',
       });
@@ -1600,12 +1804,14 @@ class _BridgeInvocation {
   final bool injectAbortSignal;
 }
 
-class _FakeWebBridge implements InappifyWebBridge {
+class _FakeWebBridge
+    implements InappifyWebBridge, InappifyWebProviderCapabilities {
   _FakeWebBridge({Map<String, Object?>? properties})
     : properties = properties ?? <String, Object?>{};
 
   bool available = true;
-  String? version;
+  bool hasTargetingSync = true;
+  String? version = '0.2.0';
   Map<String, Object?>? configureOptions;
   Object? configureResponse;
   Object? configureError;
@@ -1625,6 +1831,10 @@ class _FakeWebBridge implements InappifyWebBridge {
 
   @override
   bool get isAvailable => available;
+
+  @override
+  bool supportsMethod(String method) =>
+      method != 'syncAttributesAndOfferingsIfNeeded' || hasTargetingSync;
 
   @override
   String? get sdkVersion => version;

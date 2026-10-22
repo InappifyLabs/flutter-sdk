@@ -28,7 +28,8 @@ import 'package:web/web.dart' as web;
 /// The official `dist/inappify.global.js` export named `InAppifySDK` and a
 /// legacy global `InAppify` export are accepted as compatibility fallbacks.
 /// The returned configured instance remains inside this browser-only class.
-class JavaScriptInappifyBridge implements InappifyWebBridge {
+class JavaScriptInappifyBridge
+    implements InappifyWebBridge, InappifyWebProviderCapabilities {
   /// Creates an unconfigured JavaScript bridge.
   JavaScriptInappifyBridge();
 
@@ -64,6 +65,19 @@ class JavaScriptInappifyBridge implements InappifyWebBridge {
 
   @override
   Stream<InappifyWebBridgeEvent> get events => _events.stream;
+
+  @override
+  bool supportsMethod(String method) {
+    final instance = _instance;
+    if (instance != null) {
+      return instance.getProperty<JSAny?>(method.toJS).typeofEquals('function');
+    }
+    final prototype = _configureTarget?.getProperty<JSAny?>('prototype'.toJS);
+    return prototype.typeofEquals('object') &&
+        (prototype as JSObject)
+            .getProperty<JSAny?>(method.toJS)
+            .typeofEquals('function');
+  }
 
   @override
   Future<Object?> configure(Map<String, Object?> options) async {
@@ -333,12 +347,42 @@ class JavaScriptInappifyBridge implements InappifyWebBridge {
       return null;
     }
 
+    int? readRetryAfterMillis() {
+      Object? value;
+      final details = map?['details'];
+      if (details is Map) value = details['retryAfterMillis'];
+      if (map == null) {
+        try {
+          final jsDetails = (error as JSObject).getProperty<JSAny?>(
+            'details'.toJS,
+          );
+          if (jsDetails.typeofEquals('object') &&
+              jsDetails.isDefinedAndNotNull) {
+            value = (jsDetails as JSObject)
+                .getProperty<JSAny?>('retryAfterMillis'.toJS)
+                .dartify();
+          }
+        } catch (_) {
+          // Read only the allowlisted scalar, never stringify raw details.
+        }
+      }
+      if (value is num &&
+          value.isFinite &&
+          value >= 0 &&
+          value <= 9007199254740991 &&
+          value == value.toInt()) {
+        return value.toInt();
+      }
+      return null;
+    }
+
     return InappifyWebBridgeException(
       code: readString('code') ?? 'unknown',
       status: readStatus(),
       requestId: readString('requestId'),
       name: readString('name'),
       kind: readString('kind'),
+      retryAfterMillis: readRetryAfterMillis(),
     );
   }
 

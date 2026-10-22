@@ -30,6 +30,7 @@ class InappifyWebBridgeException implements Exception {
     this.requestId,
     this.name,
     this.kind,
+    this.retryAfterMillis,
   });
 
   /// Provider error code, or a bridge-owned fallback code.
@@ -47,8 +48,16 @@ class InappifyWebBridgeException implements Exception {
   /// Stable JavaScript SDK error kind such as `network` or `configuration`.
   final String? kind;
 
+  /// Allowlisted rate-limit delay. No other provider `details` are retained.
+  final int? retryAfterMillis;
+
   @override
   String toString() => 'InappifyWebBridgeException($code)';
+}
+
+/// Optional feature probe for a provider's actual JavaScript methods.
+abstract interface class InappifyWebProviderCapabilities {
+  bool supportsMethod(String method);
 }
 
 /// Injectable boundary between the typed Flutter adapter and JavaScript.

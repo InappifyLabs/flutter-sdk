@@ -63,7 +63,7 @@ class InappifySdkSnapshot {
   final bool failedToLoadOfferings;
   final bool failedToLoadCustomerInfo;
 
-  /// Additive authoritative mobile state; null for older/Web adapters.
+  /// Mobile state and ordered Web mirror revision; null for older adapters.
   final int? revision, storePlatform;
   final bool? isConfigured, isAuthenticated, isLogoutPending;
   final String? appUserIdentifier, market;

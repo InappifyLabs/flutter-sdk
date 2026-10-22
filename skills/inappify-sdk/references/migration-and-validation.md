@@ -8,7 +8,7 @@ its own argument even when the SDK doesn't. Trace what the wrapper invokes;
 remove or adapt the host option only with its callers accounted for. Do not
 announce that an SDK flag exists solely from a host wrapper signature.
 
-| Legacy/new integration temptation | Correct treatment for Flutter 0.2.1 |
+| Legacy/new integration temptation | Correct treatment for Flutter 0.2.2 |
 | --- | --- |
 | `login` / `logout` | Public facade uses `logIn` / `logOut` and their typed variants; Web uses ticket/OTP, not plain ID login |
 | Market/RSA/app version passed to ordinary configure | `configure(apiKey:, appUserIdentifier:)`; metadata/server supply native context |
@@ -33,8 +33,9 @@ target backend contract, not only a fake universal facade:
 - Startup with retained identity and known host-user transition; no cross-user
   snapshot, pending checkout or inventory leakage.
 - Default offering, placement selection, exact ID absent, and empty packages.
-- Mobile cache-only versus network failure; explicitly account for Flutter Web's
-  unsupported policy forwarding instead of asserting mobile parity.
+- Cache-only versus network failure on each backend. Flutter Web 0.2.2 forwards
+  all four policies; older 0.2.1 did not. Exercise the real published provider,
+  pending-network cache-only, background refresh and account transition safety.
 - One purchase tap, cancellation, timeout/offline, process restart, unknown
   attempt history, matching outcome, unrelated event, changed customer, repeated
   event. No second charge or erased unresolved journal from uncertainty.
@@ -59,7 +60,7 @@ these are not assertions that an autonomous agent evaluation was executed.
 
 | Prompt | Required decision |
 | --- | --- |
-| "Add purchases to Flutter Android 0.2.1; app uses FlutterActivity." | Preserve host integrations, require FlutterFragmentActivity for store UI, use Package and Result; no Dart Activity argument. |
+| "Add purchases to Flutter Android 0.2.2; app uses FlutterActivity." | Preserve host integrations, require FlutterFragmentActivity for store UI, use Package and Result; no Dart Activity argument. |
 | "Refresh targeting on iOS; no attributes changed." | Combined sync is supported; fresh offerings still fetched subject to 5/60 quota; no duplicate flush. |
 | "JS 0.2.0 is loaded; call combined sync from Flutter Web." | Explain adapter gap; do not invent bridge support or bypass with a second JS session. |
 | "Use cacheOnly offline on Flutter Web." | Explain ignored policy; do not promise cache-only network behavior or add persistent cache. |
@@ -76,7 +77,7 @@ these are not assertions that an autonomous agent evaluation was executed.
 
 Keep `SKILL.md` short and load reference files by task. For each SDK release:
 
-1. Pin actual released versions/commit IDs in `platforms.md`.
+1. Pin released versions/source tags in `platforms.md`; retain known commit IDs.
 2. Inspect facade signatures, coordinator gates, inherited defaults, advertised
    operations **and implementations**. An enum alone proves neither support nor
    absence; exact offering lookup is a shared inherited implementation.

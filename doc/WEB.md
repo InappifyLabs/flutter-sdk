@@ -2,14 +2,18 @@
 
 The browser adapter delegates an entire session to the external `@inappifylabs/web-sdk` JavaScript provider. Flutter exposes typed customer, offering, authentication and checkout models; the JavaScript instance owns browser transport, credentials, refresh and persistence. The Kotlin SDK is used only on Android.
 
-The Flutter package version is `0.2.1`. The reviewed Web provider baseline is **`@inappifylabs/web-sdk@0.1.0-beta.3`**, an independent version. Do not replace it with `0.1.0` merely to match the Flutter package. Capability negotiation accepts provider versions `0.1.0-beta.3` and later beta builds of `0.1.0`, stable `0.1.0`, or a higher numeric release. Missing, malformed or earlier provider versions are rejected.
+Flutter **0.2.2** requires **`@inappifylabs/web-sdk@0.2.0` or newer** for the
+CustomerInfo policy overload and combined attributes/offerings sync. These
+versions are independent; Android remains pinned to Kotlin **v0.2.1**. Missing,
+malformed, earlier and `0.2.0` prerelease provider versions are rejected. Combined
+sync is advertised only when the provider also exposes its actual method.
 
 ## Install the browser bridge before Flutter starts
 
 Flutter's build does not bundle bare npm imports and the plugin does not download or vendor a JavaScript SDK. Your host web build must resolve and bundle the provider. Add its exact baseline to the host's npm dependencies:
 
 ```sh
-npm install --save-exact @inappifylabs/web-sdk@0.1.0-beta.3
+npm install --save-exact @inappifylabs/web-sdk@0.2.0
 ```
 
 The package includes [web/inappify_web_sdk_entry.mjs](../web/inappify_web_sdk_entry.mjs). Copy or include it in your host's bundler input; its import must be processed by the host bundler. It installs this narrow, credential-free boundary:
@@ -47,7 +51,11 @@ A missing/incompatible provider makes Web lifecycle unavailable. There is no mob
 
 ## Anonymous and authenticated sessions
 
-Configure uses the **Public Web App Key**, not a mobile app key or server/project secret. The adapter passes `apiKey`, optional country/app version and fixed base URL `https://api.inappify.com/api/web/v1` to the provider. This is the independent Web API contract; mobile operations use `/app/v2/` and do not call this Web route.
+Configure uses the **Public Web App Key**, not a mobile app key or server/project
+secret. Ordinary Flutter Configure takes the public key (and optional anonymous
+identifier), with no country/app-version override. The adapter uses the fixed
+base URL `https://api.inappify.com/api/web/v1`. This is the independent Web API
+contract; mobile operations use `/app/v2/` and do not call this Web route.
 
 ```dart
 import 'package:inappify_sdk/inappify_sdk.dart';
@@ -55,14 +63,12 @@ import 'package:inappify_sdk/inappify_sdk.dart';
 Future<bool> initializeAnonymousWeb(String publicWebAppKey) async {
   final result = await InappifySdk.configureResult(
     apiKey: publicWebAppKey,
-    country: 'IR',
-    appVersion: '1.0.0',
   );
   return result.isSuccess;
 }
 ```
 
-A stable authenticated `appUserIdentifier` in Web Configure is rejected. `loginResult` with a plain user identifier is unsupported on Web. Authenticate by exchanging a short-lived Identity Ticket issued by your trusted backend for its current logged-in user, or by the provider's OTP flow. Do not issue tickets in browser code or include a server secret in the application.
+A stable authenticated `appUserIdentifier` in Web Configure is rejected. `logInResult` with a plain user identifier is unsupported on Web. Authenticate by exchanging a short-lived Identity Ticket issued by your trusted backend for its current logged-in user, or by the provider's OTP flow. Do not issue tickets in browser code or include a server secret in the application.
 
 For authenticated application startup, prefer the combined helper:
 
@@ -184,6 +190,62 @@ Both methods keep the existing `ValidateDiscountCodeData` response fields:
 This selector applies to Web; Android/iOS continue their code-only discount-link
 behavior and ignore `offeringIdentifier`.
 
+## CustomerInfo policies
+
+Both public methods forward the policy explicitly to
+`client.getCustomerInfo(mappedPolicy, options)`. Flutter's default is
+`cachedOrFetched`, while direct JavaScript defaults to `FETCH_CURRENT`.
+
+```dart
+final info = await InappifySdk.getCustomerInfo(); // CACHED_OR_FETCHED
+final result = await InappifySdk.getCustomerInfoResult(
+  fetchPolicy: InappifyCacheFetchPolicy.fetchCurrent,
+);
+if (!result.isSuccess) {
+  // result.snapshot may retain valid older data; this fetch still failed.
+}
+```
+
+| Flutter policy | JavaScript | Contract |
+| --- | --- | --- |
+| `cacheOnly` | `CACHE_ONLY` | Immediate same-session cache; no HTTP and no waiting for an in-flight network read; absence is `CACHE_MISS` |
+| `fetchCurrent` | `FETCH_CURRENT` | Wait for fresh server data; network failure stays failure, even with a cached snapshot |
+| `notStaleCachedOrCurrent` | `NOT_STALE_CACHED_OR_CURRENT` | Fresh cache, otherwise wait for server; never stale success on failure |
+| `cachedOrFetched` | `CACHED_OR_FETCHED` | Return existing cache immediately, refresh stale data in background; fetch and wait when absent |
+
+The provider's freshness threshold is five minutes visible / twenty-five hours
+hidden. CustomerInfo stays memory-only. Background updates reach Flutter's mirror,
+snapshot and events; an older response cannot replace a newer account/refresh.
+Cancellation passes `AbortSignal` in the second argument, never in the policy
+position. Internal required reads keep `FETCH_CURRENT` behavior.
+
+## Refresh attributes and offerings together
+
+```dart
+await InappifySdk.setAttributes({'language': 'fa'});
+final result = await InappifySdk.syncAttributesAndOfferingsIfNeeded();
+if (result.isSuccess) {
+  final current = result.data?.current;
+} else if (result.failure?.details['serverCode'] == 'RATE_LIMITED_NO_CACHE') {
+  final retryAfterMillis = result.failure?.details['retryAfterMillis'];
+}
+```
+
+Flutter calls this method once on its existing provider session. Web attribute
+setters already write to the server; this method fetches fresh CustomerInfo, then
+refreshes offerings. There is no second Flutter queue or limiter. The provider
+admits five calls per rolling sixty seconds, including admitted failures.
+Login/logout do not reset that client's allowance. Excess calls make no network
+requests and return current-session offerings, or a retryable
+`RATE_LIMITED_NO_CACHE` failure with numeric `retryAfterMillis` when none exist.
+
+Customer and offerings updates use existing codecs and events. If CustomerInfo
+refresh succeeds but offerings fails, the result is failure, the refreshed
+customer and last valid offerings remain in its snapshot. A snapshot is never
+proof that the requested network refresh succeeded. `failure.details.serverCode`
+retains the provider code (including `CACHE_MISS`); only allowlisted scalar error
+metadata crosses the bridge, never raw provider `details` or credentials.
+
 ## Supported scope and limitations
 
 Web supports customer/offerings/current offering, targeting context, custom/reserved attributes, discount validation, entitlement checks, session authentication and checkout operations advertised by its capability contract. `setIp` is unsupported; check optional reserved-attribute capability with `canSetReservedAttributeResult`.
@@ -199,3 +261,15 @@ The mobile V2 helpers `setNetworkEnabled`, policy-based mobile fetches, mobile s
 - [Session state and ticket provider types](../lib/session_state.dart), [public facade](../lib/inappify_sdk.dart)
 
 See [API reference](API_REFERENCE.md) and [Security and cache](SECURITY_AND_CACHE.md).
+
+## Browser acceptance tests
+
+```sh
+node tool/prepare_web_provider_test.mjs
+flutter test --platform chrome test/web_provider_contract_browser_test.dart test/web_registration_smoke_test.dart
+```
+
+The fixture tool verifies npm archive integrity and extracts the exact published
+Web SDK 0.2.0 browser bundle into an ignored test-only file. Tests run the real
+provider's cache, limiter and events with controlled HTTP/clock inputs; no real
+customer accounts, payments or backend mutations are used.

@@ -197,6 +197,6 @@ Host identity checks complement, not replace, the inventory transaction's owner
 check. Do not confirm another customer's delivery after an awaited callback.
 Subscriptions and non-consumables must never be consumed as credits.
 
-These native Dart recipes are unsupported on Flutter Web 0.2.1. Direct JS 0.2.0
+These native Dart recipes are unsupported on Flutter Web 0.2.2. Direct JS 0.2.0
 has separate delivery APIs; see [Web](web.md). Do not call a second JS session
 from Flutter to bypass its facade.

@@ -1,6 +1,6 @@
 ---
 name: inappify-sdk
-description: "Integrate, migrate, or troubleshoot Inappify SDK sessions, offerings, attributes, discounts, entitlements, purchases, payment returns, consumable delivery, and recovery. Use for Flutter inappify_sdk 0.2.1 on Android/iOS/Web and @inappifylabs/web-sdk 0.2.0. Distinguishes platform support, cache policies, identity authentication, and uncertain purchase handling."
+description: "Integrate, migrate, or troubleshoot Inappify SDK sessions, offerings, attributes, discounts, entitlements, purchases, payment returns, consumable delivery, and recovery. Use for Flutter inappify_sdk 0.2.2 on Android/iOS/Web and @inappifylabs/web-sdk 0.2.0. Distinguishes platform support, cache policies, identity authentication, and uncertain purchase handling."
 license: Apache-2.0
 ---
 
@@ -19,7 +19,7 @@ It needs no account credentials, live production access, or extra MCP connection
    direct JavaScript. Read [versions and platforms](references/platforms.md)
    before proposing platform-dependent behavior. Guard Web before using native
    platform checks; do not introduce `dart:io` into browser code.
-3. Use this baseline only for Flutter **0.2.1**, Kotlin **v0.2.1**, and Web
+3. Use this baseline only for Flutter **0.2.2**, Kotlin **v0.2.1**, and Web
    **0.2.0**. For another version, inspect that version's public source/types and
    report differences. Do not silently upgrade dependencies or assume a method's
    presence in the facade proves backend support.
@@ -32,7 +32,7 @@ It needs no account credentials, live production access, or extra MCP connection
    `snapshot`; a successful nullable lookup can mean no result.
 
 When repository prose conflicts with tagged public code, the resolved source and
-backend implementation win. The references document known gaps in the 0.2.1 Web
+backend implementation win. The references document known gaps in the 0.2.2 Web
 adapter; do not implement speculative workarounds in its private internals.
 
 ## Choose the method by intent
@@ -103,7 +103,7 @@ legacy calls or reviewing generated integration code.
   Never request, embed, print, or persist server secrets, raw session tokens,
   tickets, receipts or full customer payloads in diagnostics. Do not fabricate
   Identity Tickets in frontend code or replay a one-time ticket after uncertainty.
-- Do not invent RevenueCat APIs because names look similar. In Flutter 0.2.1
+- Do not invent RevenueCat APIs because names look similar. In Flutter 0.2.2
   there is no public `recover`, `refreshOfferings`, `checkEntitlement`, standalone
   attribute queue/flush/sync, or `setTargetingContext`. No `refresh`/`forceRefresh`
   belongs on its `getCurrentOffering`.

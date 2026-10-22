@@ -1,6 +1,6 @@
 name: inappify_sdk
 description: "Flutter SDK for Inappify purchases, entitlements, offerings, and paywalls."
-version: 0.2.1
+version: 0.2.2
 homepage: https://github.com/InappifyLabs/flutter-sdk
 repository: https://github.com/InappifyLabs/flutter-sdk
 issue_tracker: https://github.com/InappifyLabs/flutter-sdk/issues

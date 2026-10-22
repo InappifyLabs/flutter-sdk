@@ -4,7 +4,7 @@
 
 | Component | Version | Tagged source |
 | --- | --- | --- |
-| Flutter `inappify_sdk` | 0.2.1 | [flutter-sdk v0.2.1](https://github.com/InappifyLabs/flutter-sdk/tree/v0.2.1), commit `2840a3681288a68e51ed9e15cf1211eebe90001f` |
+| Flutter `inappify_sdk` | 0.2.2 | [flutter-sdk v0.2.2](https://github.com/InappifyLabs/flutter-sdk/tree/v0.2.2) |
 | Android Kotlin dependency | v0.2.1 | [kotlin-sdk v0.2.1](https://github.com/InappifyLabs/kotlin-sdk/tree/v0.2.1), commit `b481a986cd6d9f3511561c9b286513a2b792012d` |
 | Browser provider `@inappifylabs/web-sdk` | 0.2.0 | [web-sdk v0.2.0](https://github.com/InappifyLabs/web-sdk/tree/v0.2.0), commit `1b59a018679be6f717feca7cc6f1ea27198f233f` |
 
@@ -26,7 +26,7 @@ Flutter static methods share one owner. Do not configure another instance to wor
 around platform support. The native HTTP V2 contract and Web `/api/web/v1`
 contract are different; a local channel protocol version does not select HTTP V1.
 
-## Actual Flutter 0.2.1 support
+## Actual Flutter 0.2.2 support
 
 "Unsupported" means do not build an integration around that operation on this
 backend, even if a Dart signature or a newer JS method exists.
@@ -38,8 +38,8 @@ backend, even if a Dart signature or a newer JS method exists.
 | `logOutResult()` | Yes | Yes | Yes, provider replaces identity with anonymous session |
 | Ticket / OTP / authenticated-Web startup helper | Unsupported | Unsupported | Yes |
 | Offerings, placement, exact identifier lookup | Yes | Yes; exact lookup uses catalog helper | Yes; exact lookup uses catalog helper |
-| `syncAttributesAndOfferingsIfNeeded()` | Yes, 5/60 s | Yes, 5/60 s | **Unsupported in Flutter adapter**; direct JS supports it |
-| `getCustomerInfoResult(fetchPolicy:)` | Four policies | Four policies | Adapter ignores policy and calls provider default `FETCH_CURRENT` |
+| `syncAttributesAndOfferingsIfNeeded()` | Yes, 5/60 s | Yes, 5/60 s | Yes, provider-owned 5/60 s; method capability checked |
+| `getCustomerInfoResult(fetchPolicy:)` | Four policies | Four policies | Four policies forwarded explicitly; default `CACHED_OR_FETCHED` |
 | Attributes + reserved attributes | Native queue | Dart durable queue | Immediate JS/server writes; Web allowlists apply |
 | `purchaseResult(Package)` | Direct/Bazaar/Myket | Direct only | Web checkout projected to `PurchaseResult`; no automatic redirect |
 | `getDiscountedPaymentLinksResult(code, offeringIdentifier:)` | Code-only links; selector unused | Code-only links; selector unused | Explicit selected offering pricing, or current offering when omitted |
@@ -61,8 +61,8 @@ if the user needs it.
 
 | Area | Android | iOS | Web provider / Flutter bridge |
 | --- | --- | --- | --- |
-| CustomerInfo default | `cachedOrFetched` | `cachedOrFetched` | Direct JS `FETCH_CURRENT`; Flutter adapter also reaches that default |
-| CustomerInfo stale threshold | 5 min foreground / 25 h background | 5 min in this backend | Direct JS 5 min visible / 25 h hidden; Flutter does not forward policy |
+| CustomerInfo default | `cachedOrFetched` | `cachedOrFetched` | Flutter `CACHED_OR_FETCHED`; direct JS `FETCH_CURRENT` |
+| CustomerInfo stale threshold | 5 min foreground / 25 h background | 5 min in this backend | Provider 5 min visible / 25 h hidden; Flutter forwards policy |
 | Startup | Configure restores/verifies and schedules recovery/prefetch | Configure loads verified Keychain state and schedules internal recovery | Provider restores/creates session, loads customer and prefetches offerings |
 | Foreground/reconnect recovery | SDK observers: pending work or 5 min; error backoff at least 30 s | No Android observers; host may refresh customer/manual Direct deliveries | Follow provider/session/checkout lifecycle; no native recovery API |
 | CustomerInfo persistence | Native verified cache | Keychain state | Memory-only CustomerInfo; refresh-token persistence is a separate concern |
@@ -71,7 +71,7 @@ if the user needs it.
 it does not mean a request completed before the caller receives data. There is no
 general polling timer. Do not replace these policies with a host TTL/cache layer.
 
-Both mobile combined-sync implementations admit five executions per rolling
+All three combined-sync implementations admit five executions per rolling
 60 seconds. An admitted failure counts; login/logout/configure do not reset the
 client quota. Over limit: no network, current-session offerings cache or
 `RATE_LIMITED_NO_CACHE` with retry timing. Do not reset the SDK or change user to
@@ -80,12 +80,12 @@ fresh offerings fetch; an empty attribute queue still permits that fetch.
 
 ## Authoritative source map
 
-- [Public Flutter facade](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.1/lib/inappify_sdk.dart)
-- [Coordinator and mobile-only gates](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.1/lib/src/application/inappify_coordinator.dart)
-- [Web adapter and supported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.1/lib/src/platform/web/web_inappify_platform.dart)
-- [Default exact lookup / unsupported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.1/lib/inappify_sdk_platform_interface.dart)
-- [iOS Go V2 implementation](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.1/lib/src/platform/mobile/go_v2_platform.dart)
-- [Android channel contract](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.1/android/src/main/kotlin/com/inappify/inappify_sdk/InappifyChannelContract.kt)
+- [Public Flutter facade](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.2/lib/inappify_sdk.dart)
+- [Coordinator and mobile-only gates](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.2/lib/src/application/inappify_coordinator.dart)
+- [Web adapter and supported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.2/lib/src/platform/web/web_inappify_platform.dart)
+- [Default exact lookup / unsupported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.2/lib/inappify_sdk_platform_interface.dart)
+- [iOS Go V2 implementation](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.2/lib/src/platform/mobile/go_v2_platform.dart)
+- [Android channel contract](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.2/android/src/main/kotlin/com/inappify/inappify_sdk/InappifyChannelContract.kt)
 - [Direct JS implementation](https://github.com/InappifyLabs/web-sdk/blob/v0.2.0/src/client.ts)
 
 Known documentation drift: older Flutter Web examples pass removed `country` and

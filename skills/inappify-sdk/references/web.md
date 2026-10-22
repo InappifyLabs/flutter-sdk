@@ -1,4 +1,4 @@
-# Web 0.2.0 and Flutter Web 0.2.1
+# Web 0.2.0 and Flutter Web 0.2.2
 
 Read the [platform matrix](platforms.md) before sharing a mobile example with a
 PWA. Direct JavaScript APIs and Flutter bridge coverage are not identical.
@@ -152,13 +152,31 @@ failure is not proof no checkout exists. Keep host correlation when required.
 Timeout/cancellation of observation does not undo the payment; reconcile the
 same checkout. A paid checkout still isn't a consumable host inventory grant.
 
-## Flutter adapter gaps: do not paper them over
+## Flutter 0.2.2 cache and sync contract
 
-- `syncAttributesAndOfferingsIfNeeded()` is not implemented on Flutter Web 0.2.1,
-  even with JS 0.2.0 installed. Direct JS below supports it.
-- The Flutter Web adapter ignores the four CustomerInfo fetch-policy inputs and
-  calls the provider default `FETCH_CURRENT`. Do not promise cache-only/offline
-  mode from that signature or emulate it with a new persistent cache.
+Flutter 0.2.2 requires provider 0.2.0+. It forwards combined sync to the same
+provider instance: fresh customer information, then refreshed offerings. Web
+setters already write to the server; do not invent an offline queue or upload
+attributes again. The provider admits five calls per rolling sixty seconds,
+counts failures, keeps the allowance across login/logout, and returns same-session
+offerings above the limit. Without cache, inspect retryable failure
+`details['serverCode'] == 'RATE_LIMITED_NO_CACHE'` and numeric `retryAfterMillis`.
+An admitted network failure remains failure, with the last valid/partially
+refreshed snapshot retained.
+
+Both CustomerInfo public methods explicitly forward all four policies. Flutter
+defaults to `cachedOrFetched` (`CACHED_OR_FETCHED`), while direct JS defaults to
+`FETCH_CURRENT`. Cache-only does no HTTP and does not wait behind a pending network
+read; absence is `CACHE_MISS`. Required fresh reads never fall back to stale
+success. Background updates reach Flutter's mirror/events, with prior-account
+and superseded responses rejected. Cancellation options are the second JS
+argument. Do not add a second persistent CustomerInfo cache.
+
+Historical Flutter 0.2.1 lacked combined sync and ignored policy forwarding on
+Web. Inspect the resolved Flutter version before promising the corrected behavior.
+
+## Remaining Flutter adapter gaps
+
 - Flutter delivery handler, native consumable sync/confirm, store sync/restore,
   native attempt history and mobile URL/network controls are unavailable on Web.
   Direct JS delivery support does not make those Flutter methods available.

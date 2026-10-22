@@ -1,3 +1,21 @@
+## 0.2.2
+
+- Connect Flutter Web `syncAttributesAndOfferingsIfNeeded` to the existing Web
+  provider instance. Delegate its five-admission rolling minute limit, including
+  failures and same-session cache fallback; retain partial customer refreshes
+  when the following offerings request fails.
+- Forward all four CustomerInfo fetch policies to JavaScript, explicitly default
+  to `CACHED_OR_FETCHED`, and send cancellation options in the second argument.
+  Web cache-only reads no longer wait behind an in-flight network operation.
+- Mirror provider background updates with ordered snapshots; reject superseded
+  customer responses and clear prior-account mirrors at identity replacement.
+- Preserve provider error codes and allowlisted numeric rate-limit timing without
+  copying raw error details. Require Web provider 0.2.0 or newer and probe the
+  actual combined-sync method before advertising support.
+- Add fake-bridge and Chrome acceptance tests against the published Web 0.2.0
+  provider; update integration docs and the official agent skill. Keep Android
+  pinned to Kotlin v0.2.1 with existing purchase, cache and recovery behavior.
+
 ## 0.2.1
 
 - Add optional `offeringIdentifier` to both public discount-link methods for Web

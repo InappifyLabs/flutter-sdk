@@ -2,7 +2,7 @@
 
 On iOS, Inappify runs its mobile V2 lifecycle and Direct payment flow in Dart. The Swift plugin supplies application metadata and Keychain persistence through `inappify_sdk`; it does not call the Kotlin SDK or implement an App Store billing client. Bazaar and Myket purchase, inventory and subscription recovery are Android-only.
 
-The Flutter package and mobile behavior version are `0.2.1`. [Android](ANDROID.md) explains the separate Kotlin dependency.
+The Flutter package and mobile behavior version are `0.2.2`. [Android](ANDROID.md) explains the separate Kotlin dependency.
 
 ## Application setup
 
@@ -120,7 +120,7 @@ Cached CustomerInfo may be retained after the signed envelope expires. Entitleme
 - [Swift metadata and Keychain companion](../ios/Classes/InappifySdkPlugin.swift), [podspec](../ios/inappify_sdk.podspec)
 - [Public Flutter facade](../lib/inappify_sdk.dart)
 
-The 0.2.1 facade keeps the Dart Direct pipeline and persisted state unchanged.
+The 0.2.2 facade keeps the Dart Direct pipeline and persisted state unchanged.
 Automatic consumable handler registration is unsupported on this iOS backend.
 Use manual delivery/recovery where supported; Android lifecycle observers are
 owned by Kotlin. Combined attribute/offerings sync is supported on both backends

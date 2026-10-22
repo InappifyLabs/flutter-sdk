@@ -25,7 +25,7 @@ void main() {
     },
   );
 
-  test('browser entry discovers the beta.3 global IIFE bundle', () async {
+  test('browser entry discovers the 0.2.0 global IIFE bundle', () async {
     var receivedWorkingFetchOverride = false;
     String? receivedBaseUrl;
     final session = JSObject();
@@ -78,7 +78,7 @@ void main() {
     );
     final bundle = JSObject();
     bundle.setProperty('InAppify'.toJS, inAppify);
-    bundle.setProperty('SDK_VERSION'.toJS, '0.1.0-beta.3'.toJS);
+    bundle.setProperty('SDK_VERSION'.toJS, '0.2.0'.toJS);
     globalContext.setProperty('InAppifySDK'.toJS, bundle);
     addTearDown(() {
       globalContext.delete('InAppifySDK'.toJS);
@@ -99,7 +99,7 @@ void main() {
     expect(capabilities.backendKind, InappifyBackendKind.webJavaScript);
     expect(capabilities.ownsSession, isTrue);
     expect(capabilities.supportsCompleteLifecycle, isTrue);
-    expect(capabilities.sdkVersion, '0.1.0-beta.3');
+    expect(capabilities.sdkVersion, '0.2.0');
     expect(configured.isSuccess, isTrue);
     expect(receivedWorkingFetchOverride, isTrue);
     expect(receivedBaseUrl, 'https://api.inappify.com/api/web/v1');

@@ -27,6 +27,8 @@ migrate_working_dir/
 **/doc/api/
 .dart_tool/
 build/
+test/web/fixtures/*.local.js
+/test/canvaskit/
 
 # Local release evidence and developer configuration
 AGENTS.md
