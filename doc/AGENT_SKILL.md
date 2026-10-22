@@ -41,6 +41,21 @@ After installation, start a new turn and invoke `$inappify-sdk`. If it does not
 appear in the host's skill list, reload/restart that agent. Other agents use
 their own invocation UI.
 
+### Update an installed skill
+
+Updating the Flutter/npm dependency does not update a separately installed skill.
+For installations tracked by the skills CLI, run from the consuming project:
+
+```sh
+npx skills update inappify-sdk
+```
+
+See the [skills CLI update reference](https://github.com/vercel-labs/skills#other-commands).
+For manual or built-in-installer copies, replace the whole skill folder from
+the repository, including its references and agent metadata. Start a new turn or
+reload the agent afterward. The current skill targets Flutter 0.2.2, Kotlin
+v0.2.1 and Web provider 0.2.0; it retains the historical Flutter Web 0.2.1 caveat.
+
 ### Manual installation
 
 Copy the **whole `inappify-sdk` folder**, including `references/` and `agents/`,

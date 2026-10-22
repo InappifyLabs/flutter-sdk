@@ -45,8 +45,8 @@ adapter; do not implement speculative workarounds in its private internals.
 | Display current / placed / exact offering | `getCurrentOfferingResult()`, `getCurrentOfferingResult(placementIdentifier: ...)`, `getOfferingResult(id)` |
 | Read the catalog | `getOfferingsResult()`; use model helpers for existing data |
 | Update customer properties | `setAttributesResult(Map<String, String?>)`; null/empty deletes; reserved setters use supported keys |
-| Refresh after attribute-based targeting changes | Android/iOS `syncAttributesAndOfferingsIfNeeded()`; read the Web support limitation before suggesting it |
-| Read access | `getCustomerInfoResult(fetchPolicy: ...)`, then `entitlements.active`; synchronous helpers read the current mirror |
+| Refresh after attribute-based targeting changes | `syncAttributesAndOfferingsIfNeeded()` on Android/iOS/Web; Flutter Web 0.2.2 requires JS provider 0.2.0+ and its method capability |
+| Read access | `getCustomerInfoResult(fetchPolicy: ...)` on Android/iOS/Web; default `cachedOrFetched`, then `entitlements.active`; synchronous helpers read the current mirror |
 | Purchase | `purchaseResult(InappifyPurchaseParams(packageToPurchase: selectedPackage, ...))` |
 | Validate a discount | `getDiscountedPaymentLinksResult(code, offeringIdentifier: ...)`; explicit offering selects Web pricing only |
 | Reconcile an uncertain Android attempt | `getPurchaseAttempt(savedId)`, `purchaseUpdates`, and user-initiated `syncStorePurchases()` when needed |
@@ -61,6 +61,14 @@ purchase buttons, retries, attempt journals, returns, or fulfillment**. Read
 checkout, direct JS APIs, and adapter gaps. Read
 [migration and validation](references/migration-and-validation.md) when replacing
 legacy calls or reviewing generated integration code.
+
+For Flutter Web 0.2.2, forward all four CustomerInfo policies through the facade;
+`cacheOnly` never waits for pending HTTP. Combined sync uses the existing JS
+instance and its five-admission rolling 60-second quota; admitted failures count.
+Inspect `failure.details['serverCode']` for `CACHE_MISS` or
+`RATE_LIMITED_NO_CACHE`, with numeric `retryAfterMillis` for the latter. A retained
+snapshot does not turn a failed fresh fetch into success. Flutter Web 0.2.1 lacked
+combined sync and policy forwarding; do not apply the new contract to that version.
 
 ## Non-negotiable integration rules
 
