@@ -1,6 +1,6 @@
 ---
 name: inappify-sdk
-description: "Integrate, migrate, or troubleshoot Inappify SDK sessions, offerings, attributes, discounts, entitlements, purchases, payment returns, consumable delivery, and recovery. Use for Flutter inappify_sdk 0.2.2 on Android/iOS/Web and @inappifylabs/web-sdk 0.2.0. Distinguishes platform support, cache policies, identity authentication, and uncertain purchase handling."
+description: "Integrate, migrate, or troubleshoot Inappify SDK sessions, offerings, attributes, discounts, entitlements, purchases, payment returns, consumable delivery, and recovery. Use for Flutter inappify_sdk 0.2.3 on Android/iOS/Web, Kotlin v0.2.2, and @inappifylabs/web-sdk 0.2.0, including Myket manually renewed timed subscriptions. Distinguishes platform support, cache policies, identity authentication, and uncertain purchase handling."
 license: Apache-2.0
 ---
 
@@ -19,7 +19,7 @@ It needs no account credentials, live production access, or extra MCP connection
    direct JavaScript. Read [versions and platforms](references/platforms.md)
    before proposing platform-dependent behavior. Guard Web before using native
    platform checks; do not introduce `dart:io` into browser code.
-3. Use this baseline only for Flutter **0.2.2**, Kotlin **v0.2.1**, and Web
+3. Use this baseline only for Flutter **0.2.3**, Kotlin **v0.2.2**, and Web
    **0.2.0**. For another version, inspect that version's public source/types and
    report differences. Do not silently upgrade dependencies or assume a method's
    presence in the facade proves backend support.
@@ -32,7 +32,7 @@ It needs no account credentials, live production access, or extra MCP connection
    `snapshot`; a successful nullable lookup can mean no result.
 
 When repository prose conflicts with tagged public code, the resolved source and
-backend implementation win. The references document known gaps in the 0.2.2 Web
+backend implementation win. The references document known gaps in the 0.2.3 Web
 adapter; do not implement speculative workarounds in its private internals.
 
 ## Choose the method by intent
@@ -45,7 +45,7 @@ adapter; do not implement speculative workarounds in its private internals.
 | Display current / placed / exact offering | `getCurrentOfferingResult()`, `getCurrentOfferingResult(placementIdentifier: ...)`, `getOfferingResult(id)` |
 | Read the catalog | `getOfferingsResult()`; use model helpers for existing data |
 | Update customer properties | `setAttributesResult(Map<String, String?>)`; null/empty deletes; reserved setters use supported keys |
-| Refresh after attribute-based targeting changes | `syncAttributesAndOfferingsIfNeeded()` on Android/iOS/Web; Flutter Web 0.2.2 requires JS provider 0.2.0+ and its method capability |
+| Refresh after attribute-based targeting changes | `syncAttributesAndOfferingsIfNeeded()` on Android/iOS/Web; Flutter Web 0.2.2–0.2.3 requires JS provider 0.2.0+ and its method capability |
 | Read access | `getCustomerInfoResult(fetchPolicy: ...)` on Android/iOS/Web; default `cachedOrFetched`, then `entitlements.active`; synchronous helpers read the current mirror |
 | Purchase | `purchaseResult(InappifyPurchaseParams(packageToPurchase: selectedPackage, ...))` |
 | Validate a discount | `getDiscountedPaymentLinksResult(code, offeringIdentifier: ...)`; explicit offering selects Web pricing only |
@@ -62,7 +62,7 @@ checkout, direct JS APIs, and adapter gaps. Read
 [migration and validation](references/migration-and-validation.md) when replacing
 legacy calls or reviewing generated integration code.
 
-For Flutter Web 0.2.2, forward all four CustomerInfo policies through the facade;
+For Flutter Web 0.2.2–0.2.3, forward all four CustomerInfo policies through the facade;
 `cacheOnly` never waits for pending HTTP. Combined sync uses the existing JS
 instance and its five-admission rolling 60-second quota; admitted failures count.
 Inspect `failure.details['serverCode']` for `CACHE_MISS` or
@@ -100,9 +100,14 @@ combined sync and policy forwarding; do not apply the new contract to that versi
   customer, source and delivery ID. Only then return `delivered` from a registered
   handler **or** call `confirmDelivery` in a manual flow. Never confirm inside the
   registered handler. A failed acknowledgement must not grant again.
-- Do not consume subscription/non-consumable receipts or restore consumables as
-  fresh inventory. `DELIVERY_REQUIRED`/`CONSUME_REQUIRED` are workflow states,
-  not a completed host grant. Purchase history is not current entitlement authority.
+- Never consume receipts from host code or restore consumables as fresh inventory.
+  Bazaar subscription/non-consumable receipts remain unconsumed. Myket timed
+  subscriptions are the specific exception: Kotlin v0.2.2 consumes their IN_APP
+  receipts only after a server-committed entitlement grant authorizes consumption;
+  they do not use the host consumable handler. Read the Myket section in
+  [purchases and recovery](references/purchases.md). `DELIVERY_REQUIRED`/
+  `CONSUME_REQUIRED` are workflow states, not a completed host grant. Purchase
+  history is not current entitlement authority.
 - Trust server prices and verified CustomerInfo. Do not calculate a purchase
   discount locally, turn a network error into "invalid code", infer lifetime
   access merely from a null expiry, or promise offline revocation/clock-tamper
@@ -111,7 +116,7 @@ combined sync and policy forwarding; do not apply the new contract to that versi
   Never request, embed, print, or persist server secrets, raw session tokens,
   tickets, receipts or full customer payloads in diagnostics. Do not fabricate
   Identity Tickets in frontend code or replay a one-time ticket after uncertainty.
-- Do not invent RevenueCat APIs because names look similar. In Flutter 0.2.2
+- Do not invent RevenueCat APIs because names look similar. In Flutter 0.2.3
   there is no public `recover`, `refreshOfferings`, `checkEntitlement`, standalone
   attribute queue/flush/sync, or `setTargetingContext`. No `refresh`/`forceRefresh`
   belongs on its `getCurrentOffering`.

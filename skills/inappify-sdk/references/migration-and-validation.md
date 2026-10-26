@@ -8,7 +8,7 @@ its own argument even when the SDK doesn't. Trace what the wrapper invokes;
 remove or adapt the host option only with its callers accounted for. Do not
 announce that an SDK flag exists solely from a host wrapper signature.
 
-| Legacy/new integration temptation | Correct treatment for Flutter 0.2.2 |
+| Legacy/new integration temptation | Correct treatment for Flutter 0.2.3 |
 | --- | --- |
 | `login` / `logout` | Public facade uses `logIn` / `logOut` and their typed variants; Web uses ticket/OTP, not plain ID login |
 | Market/RSA/app version passed to ordinary configure | `configure(apiKey:, appUserIdentifier:)`; metadata/server supply native context |
@@ -43,6 +43,11 @@ target backend contract, not only a fake universal facade:
   authoritative status/access; iOS cannot use Web checkout APIs.
 - Consumable grant commits once, confirm fails, restart/retry, duplicate delivery,
   account change and missing handler. Inventory must not be credited again.
+- Myket timed subscription: matching SUBSCRIPTION catalog product uses IN_APP;
+  committed server authorization precedes consumption, pending/old-backend responses
+  preserve receipts, consume retry/restart never grants another term, and no host
+  delivery handler runs. Recheck ordinary Myket consumables/lifetime access and
+  existing Bazaar, Direct, and legacy V1 behavior when changing SDK/service code.
 - Explicit Web discount offering different from default; omitted selector;
   blank/invalid selector with no fallback; discounted catalog remains separate.
 - Combined sync Android/iOS: attributes before offerings, empty queue still
@@ -60,14 +65,17 @@ these are not assertions that an autonomous agent evaluation was executed.
 
 | Prompt | Required decision |
 | --- | --- |
-| "Add purchases to Flutter Android 0.2.2; app uses FlutterActivity." | Preserve host integrations, require FlutterFragmentActivity for store UI, use Package and Result; no Dart Activity argument. |
+| "Add purchases to Flutter Android 0.2.3; app uses FlutterActivity." | Preserve host integrations, require FlutterFragmentActivity for store UI, use Package and Result; no Dart Activity argument. |
 | "Refresh targeting on iOS; no attributes changed." | Combined sync is supported; fresh offerings still fetched subject to 5/60 quota; no duplicate flush. |
-| "JS 0.2.0 is loaded; call combined sync from Flutter Web." | Explain adapter gap; do not invent bridge support or bypass with a second JS session. |
-| "Use cacheOnly offline on Flutter Web." | Explain ignored policy; do not promise cache-only network behavior or add persistent cache. |
+| "JS 0.2.0 is loaded; call combined sync from Flutter Web 0.2.3." | Use the supported facade and existing provider, subject to its 5/60 quota; no second JS session. Older Flutter 0.2.1 lacked this bridge. |
+| "Use cacheOnly offline on Flutter Web 0.2.3." | Forward cacheOnly: no HTTP or wait for pending HTTP; return CACHE_MISS if absent. Older Flutter 0.2.1 ignored the policy. |
 | "Login this PWA by customer ID." | Use backend ticket/authenticated helper or OTP; no client-created ticket/server secret. |
 | "After Android restart lookup returns successful null; retry payment now." | Unknown; retain attempt/context, reconcile matching native result; no automatic new charge. |
 | "Retry iOS Direct using the same key guarantees no duplicate." | Reject guarantee: local correlation only; reconcile before another payment. |
 | "Confirm coins immediately on DELIVERY_REQUIRED." | Grant durably once first; then handler delivered OR manual confirmation; no double grant. |
+| "Myket is installed but Flutter 0.2.2 rejects subscriptions." | Explain the older-version gate; recommend the coordinated Flutter 0.2.3/Kotlin v0.2.2 and compatible backend, matching consumable Myket SKU with Inappify SUBSCRIPTION and package duration. Do not relabel the catalog or promise automatic renewal. |
+| "Consume a Myket subscription immediately after the store callback." | No host consume: await verified server grant and native consumption authorization; SDK handles consumption/retry without a host inventory delivery. |
+| "Old backend omitted requiresConsumption; clear pending work and buy again." | Preserve the original receipt/attempt, deploy compatible backend and reconcile; no second charge or client-forged authorization. |
 | "Restore iOS App Store subscription using restoreStorePurchases." | No StoreKit in this backend; Direct-delivery reconciliation only. |
 | "Discount upgrade placement, default offering is different." | Pass selected offering ID; no default fallback; use returned priced offering/code in Web checkout. |
 | "Remove old JS forceRefresh, logout, ID-based purchase." | Retain compatibility; prefer new semantic forms only for new integration code. |

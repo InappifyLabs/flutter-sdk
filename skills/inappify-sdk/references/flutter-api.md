@@ -1,4 +1,4 @@
-# Flutter 0.2.2 public API recipes
+# Flutter 0.2.3 public API recipes
 
 Use `import 'package:inappify_sdk/inappify_sdk.dart';`. All calls below are static.
 Examples are independent API demonstrations, not a script to execute every call
@@ -102,7 +102,7 @@ Future<void> customerExamples() async {
 | `fetchCurrent` | Wait for server; no stale success fallback on failure |
 | `notStaleCachedOrCurrent` | Fresh cache or wait for server; no stale fallback |
 
-Flutter Web 0.2.2 forwards these modes to provider 0.2.0+, including the explicit
+Flutter Web 0.2.2–0.2.3 forwards these modes to provider 0.2.0+, including the explicit
 `CACHED_OR_FETCHED` default. `cacheOnly` never waits for pending HTTP. Check typed
 failure `details['serverCode']` for `CACHE_MISS` and `RATE_LIMITED_NO_CACHE`.
 Flutter 0.2.1 did not forward policies on Web; do not promise the newer behavior
