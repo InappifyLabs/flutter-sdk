@@ -1,5 +1,5 @@
 group = "com.inappify.inappify_sdk"
-version = "0.2.2"
+version = "0.2.3"
 
 buildscript {
     ext.kotlin_version = "2.4.0"
@@ -70,7 +70,7 @@ kotlin {
 }
 
 dependencies {
-    implementation "com.github.InappifyLabs:kotlin-sdk:v0.2.1"
+    implementation "com.github.InappifyLabs:kotlin-sdk:v0.2.2"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
 
     testImplementation platform("org.junit:junit-bom:5.10.2")

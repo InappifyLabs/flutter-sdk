@@ -5,10 +5,10 @@ Bazaar and Myket purchases run only on Android and are delegated to the Kotlin S
 | Market | Server configuration | Native session route | Supported products and inventory |
 | --- | --- | --- | --- |
 | Bazaar | `Bazar` | `Bazar` | Consumable, non-consumable, subscription; subscriptions and in-app inventory |
-| Myket | `MyKet` | `MyKet` | Consumable and non-consumable; in-app inventory only |
+| Myket | `MyKet` | `MyKet` | Consumable, non-consumable and manually renewed timed subscription; in-app inventory only |
 | Direct | `DirectAndroid` | Platform-specific server direct route | Server checkout and delivery queue; no Bazaar/Myket UI |
 
-Myket subscription purchases are unsupported and rejected before billing launch. Bazaar/Myket do not provide an iOS route in this plugin; iOS uses its existing Dart V2 direct implementation. There is no Google Play Billing or Apple StoreKit implementation in these store adapters.
+Myket timed subscriptions use ordinary consumable in-app SKUs; Inappify manages duration and manual renewal. Myket does not provide native or automatic-renewal subscriptions. Bazaar/Myket do not provide an iOS route in this plugin; iOS uses its existing Dart V2 direct implementation. There is no Google Play Billing or Apple StoreKit implementation in these store adapters.
 
 ## Store setup and purchase
 
@@ -160,3 +160,9 @@ confirmDelivery(deliveryId). Do not mix competing automatic and manual grant pat
 Only marked InAppify return URLs trigger forced native recovery. Android initial
 and new intents are forwarded automatically; custom routing can also call
 handleDeepLink(url). Flutter navigation remains host-owned.
+
+## Myket timed-plan setup (0.2.3)
+
+Use a consumable SKU in Myket, the matching SUBSCRIPTION product in Inappify, and the intended duration on the Offering package. The Kotlin 0.2.2 adapter buys it as IN_APP and consumes it only after the backend confirms a committed grant with `requiresConsumption: true` and payment/event IDs. Do not call consume or a consumable delivery handler yourself for this plan. Keep normal consumables on the existing durable host-fulfillment flow and lifetime products non-consumable.
+
+Deploy the matching V2 commerce service before the SDK. Missing consumption authorization preserves the receipt for retry instead of consuming it. Recovery resumes interrupted verification/consumption using the same token without extending access twice; purchase again with a new attempt to renew manually. Consumed receipts disappear from Myket inventory: restore current access from server CustomerInfo using the same user identity. This adds no iOS/Web marketplace billing or automatic renewal. See [Myket's official flow](https://myket.ir/kb/pages/java/).

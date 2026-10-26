@@ -1,8 +1,6 @@
 # Releasing
 
-Flutter package/mobile version `0.2.2` is tagged `v0.2.2`. Android retains the
-independently published Kotlin SDK **v0.2.1**; a Flutter-only release does not
-require a new native tag. Web requires provider **0.2.0+**, independently versioned.
+Flutter package/mobile version `0.2.3` is tagged `v0.2.3`. Android requires Kotlin SDK **v0.2.2** for Myket timed subscriptions; publish and verify that native tag before this Flutter release. Web requires provider **0.2.0+**, independently versioned.
 
 1. Validate the pinned Kotlin SDK tag on GitHub/JitPack before publishing Flutter. Retain that exact dependency for Flutter-only fixes; publish a new Kotlin tag first only when native changes require it. Update `pubspec.yaml`, `goV2SdkVersion`, Android plugin version metadata, the podspec version/source tag, relevant expectations, and installation snippets. Use `major.minor.patch` for stable releases and `major.minor.patch-beta.N` for beta releases.
 2. Run `python3 tool/verify_release.py`, all Flutter tests and static analysis, Android bridge tests, and example builds. On macOS compile the iOS simulator example. Verify the actual resolved native AAR and its release digest; do not substitute a local Maven build when claiming public availability.
@@ -20,7 +18,7 @@ run the project test suites. Commit the reviewed package before publishing.
 
 Run `flutter pub publish` and authenticate with the Google Account that will own
 the package. Review and confirm the upload. After publication, consumers can use
-`inappify_sdk: ^0.2.2`. The first upload can subsequently be transferred to a
+`inappify_sdk: ^0.2.3`. The first upload can subsequently be transferred to a
 verified publisher through pub.dev.
 
 GitHub tags remain available for Git consumers. Pub.dev uploads are made from the

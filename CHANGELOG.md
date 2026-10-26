@@ -1,3 +1,8 @@
+## 0.2.3
+
+- Update Android to Kotlin v0.2.2 for Myket manually renewed timed subscriptions, using consumable Myket SKUs mapped to Inappify SUBSCRIPTION products.
+- Keep Flutter purchase/recovery APIs and native protocol v1 unchanged. Deploy the matching V2 commerce backend first; Bazaar, normal consumables, lifetime products, iOS/Web and Direct flows retain their existing behavior.
+
 ## 0.2.2
 
 - Connect Flutter Web `syncAttributesAndOfferingsIfNeeded` to the existing Web

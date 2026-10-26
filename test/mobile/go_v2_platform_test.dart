@@ -205,7 +205,7 @@ void main() {
         'identifierValue': 'com.example.fixture',
         'versionName': '2.1.0',
         'versionCode': 21,
-        'sdkVersion': '0.2.2',
+        'sdkVersion': '0.2.3',
         'country': 'IR',
       });
       expect(transport.calls.single.bearer, 'public-fixture');
