@@ -1,8 +1,8 @@
 # Official Inappify SDK agent skill
 
 The distributable skill lives at [`skills/inappify-sdk`](../skills/inappify-sdk/SKILL.md).
-Its current verified baseline is Flutter **0.2.2**, its Android Kotlin dependency
-**v0.2.1**, and the independent Web JavaScript provider **0.2.0**.
+Its release baseline is Flutter **0.2.4**, its Android Kotlin dependency
+**v0.2.3**, and the independent Web JavaScript provider **0.2.0**.
 
 It teaches an agent to select public methods, respect platform differences, and
 preserve identity, caches, uncertain purchase attempts and durable consumable
@@ -53,8 +53,8 @@ npx skills update inappify-sdk
 See the [skills CLI update reference](https://github.com/vercel-labs/skills#other-commands).
 For manual or built-in-installer copies, replace the whole skill folder from
 the repository, including its references and agent metadata. Start a new turn or
-reload the agent afterward. The current skill targets Flutter 0.2.2, Kotlin
-v0.2.1 and Web provider 0.2.0; it retains the historical Flutter Web 0.2.1 caveat.
+reload the agent afterward. The current skill targets Flutter 0.2.4, Kotlin
+v0.2.3 and Web provider 0.2.0; it retains the historical Flutter Web 0.2.1 caveat.
 
 ### Manual installation
 
@@ -74,7 +74,7 @@ for current Codex discovery and invocation behavior.
 
 Invoke it explicitly with `$inappify-sdk`, for example:
 
-> Use $inappify-sdk to integrate Flutter inappify_sdk 0.2.2. Target Android, iOS
+> Use $inappify-sdk to integrate Flutter inappify_sdk 0.2.4. Target Android, iOS
 > Direct and Web provider 0.2.0. Inspect my installed versions first and preserve
 > existing pending purchases and inventory grants.
 

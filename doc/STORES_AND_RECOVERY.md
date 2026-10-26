@@ -161,8 +161,16 @@ Only marked InAppify return URLs trigger forced native recovery. Android initial
 and new intents are forwarded automatically; custom routing can also call
 handleDeepLink(url). Flutter navigation remains host-owned.
 
-## Myket timed-plan setup (0.2.3)
+## Myket timed-plan setup (0.2.4)
 
-Use a consumable SKU in Myket, the matching SUBSCRIPTION product in Inappify, and the intended duration on the Offering package. The Kotlin 0.2.2 adapter buys it as IN_APP and consumes it only after the backend confirms a committed grant with `requiresConsumption: true` and payment/event IDs. Do not call consume or a consumable delivery handler yourself for this plan. Keep normal consumables on the existing durable host-fulfillment flow and lifetime products non-consumable.
+Use a consumable SKU in Myket, the matching SUBSCRIPTION product in Inappify, and the intended duration on the Offering package. The Kotlin 0.2.3 adapter buys it as IN_APP and consumes it only after the backend confirms a committed grant with `requiresConsumption: true` and payment/event IDs. Do not call consume or a consumable delivery handler yourself for this plan. Keep normal consumables on the existing durable host-fulfillment flow and lifetime products non-consumable.
+
+For older receipts, the committed server purchase type is authoritative, including
+when the old local pending type differs. Recovery requires matching purchase scope
+and confirmed access/delivery, consumes only subscription/consumable receipts, and
+must not extend access or deliver inventory again. Recorded NON_CONSUMABLE
+purchases are never consumed. Do not clear pending work or manually consume a
+receipt to bypass missing evidence. Deploy the matching backend before the new
+native/Flutter versions; Bazaar and Direct behavior is unchanged.
 
 Deploy the matching V2 commerce service before the SDK. Missing consumption authorization preserves the receipt for retry instead of consuming it. Recovery resumes interrupted verification/consumption using the same token without extending access twice; purchase again with a new attempt to renew manually. Consumed receipts disappear from Myket inventory: restore current access from server CustomerInfo using the same user identity. This adds no iOS/Web marketplace billing or automatic renewal. See [Myket's official flow](https://myket.ir/kb/pages/java/).

@@ -2,10 +2,16 @@
 
 ## Release baseline
 
+This release uses Flutter **0.2.4** with Kotlin **v0.2.3** and unchanged Web
+provider **0.2.0**. The new native release adds server-authoritative Myket product
+types and recovery of older receipts after confirmed fulfillment. Deploy the
+matching commerce backend before upgrading clients. Inspect the host's resolved
+dependency before applying the new recovery contract.
+
 | Component | Version | Tagged source |
 | --- | --- | --- |
-| Flutter `inappify_sdk` | 0.2.3 | [flutter-sdk v0.2.3](https://github.com/InappifyLabs/flutter-sdk/tree/v0.2.3), commit `b4177c8e832fba0b1ef669bc95aa4ede3aea768e` |
-| Android Kotlin dependency | v0.2.2 | [kotlin-sdk v0.2.2](https://github.com/InappifyLabs/kotlin-sdk/tree/v0.2.2), commit `08009a862ed97ac9c0995d1737889a49ed939904` |
+| Flutter `inappify_sdk` | 0.2.4 | [flutter-sdk v0.2.4](https://github.com/InappifyLabs/flutter-sdk/tree/v0.2.4) |
+| Android Kotlin dependency | v0.2.3 | [kotlin-sdk v0.2.3](https://github.com/InappifyLabs/kotlin-sdk/tree/v0.2.3), commit `e75d40a0b7b5b8664a08888ca473a585a2977888` |
 | Browser provider `@inappifylabs/web-sdk` | 0.2.0 | [web-sdk v0.2.0](https://github.com/InappifyLabs/web-sdk/tree/v0.2.0), commit `1b59a018679be6f717feca7cc6f1ea27198f233f` |
 
 This is a fixed compatibility baseline, not a claim to track the latest release.
@@ -26,7 +32,7 @@ Flutter static methods share one owner. Do not configure another instance to wor
 around platform support. The native HTTP V2 contract and Web `/api/web/v1`
 contract are different; a local channel protocol version does not select HTTP V1.
 
-## Actual Flutter 0.2.3 support
+## Flutter 0.2.4 support (unchanged public APIs)
 
 "Unsupported" means do not build an integration around that operation on this
 backend, even if a Dart signature or a newer JS method exists.
@@ -57,8 +63,9 @@ Do not add a second JS call path to fake parity: Flutter would miss snapshots,
 events and ownership guarantees. Explain the gap and scope an explicit SDK change
 if the user needs it.
 
-Myket timed subscriptions require Flutter 0.2.3 / Kotlin v0.2.2 and the compatible
-V2 commerce backend. They use consumable IN_APP SKUs with server-managed duration
+Myket timed subscriptions first shipped in Flutter 0.2.3 / Kotlin v0.2.2. Recovery
+that corrects an older local product type requires Flutter 0.2.4 / Kotlin v0.2.3
+and the matching V2 commerce backend. They use consumable IN_APP SKUs with server-managed duration
 and manual renewal, not native store subscriptions. Flutter 0.2.2 / Kotlin v0.2.1
 reject that route with `MYKET_SUBSCRIPTIONS_UNSUPPORTED`; store installation or
 login cannot enable it. See [Myket setup and fulfillment](purchases.md#myket-product-types-and-timed-subscriptions).
@@ -88,12 +95,15 @@ fresh offerings fetch; an empty attribute queue still permits that fetch.
 
 ## Authoritative source map
 
-- [Public Flutter facade](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.3/lib/inappify_sdk.dart)
-- [Coordinator and mobile-only gates](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.3/lib/src/application/inappify_coordinator.dart)
-- [Web adapter and supported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.3/lib/src/platform/web/web_inappify_platform.dart)
-- [Default exact lookup / unsupported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.3/lib/inappify_sdk_platform_interface.dart)
-- [iOS Go V2 implementation](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.3/lib/src/platform/mobile/go_v2_platform.dart)
-- [Android channel contract](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.3/android/src/main/kotlin/com/inappify/inappify_sdk/InappifyChannelContract.kt)
+The Flutter links document the public API. For native recovery, inspect the
+resolved Kotlin v0.2.3 source and matching deployed backend as well.
+
+- [Public Flutter facade](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.4/lib/inappify_sdk.dart)
+- [Coordinator and mobile-only gates](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.4/lib/src/application/inappify_coordinator.dart)
+- [Web adapter and supported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.4/lib/src/platform/web/web_inappify_platform.dart)
+- [Default exact lookup / unsupported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.4/lib/inappify_sdk_platform_interface.dart)
+- [iOS Go V2 implementation](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.4/lib/src/platform/mobile/go_v2_platform.dart)
+- [Android channel contract](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.4/android/src/main/kotlin/com/inappify/inappify_sdk/InappifyChannelContract.kt)
 - [Direct JS implementation](https://github.com/InappifyLabs/web-sdk/blob/v0.2.0/src/client.ts)
 
 Known documentation drift: older Flutter Web examples pass removed `country` and

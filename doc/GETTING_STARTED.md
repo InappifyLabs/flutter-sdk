@@ -1,4 +1,4 @@
-# Getting started — 0.2.3
+# Getting started — 0.2.4
 
 Use the local path dependency while developing the coordinated native release:
 
@@ -8,8 +8,8 @@ dependencies:
     path: ../FlutterSDK
 ```
 
-After publication use `inappify_sdk: ^0.2.3`. The Android dependency is Kotlin
-`v0.2.2`; see [Android build/local checkout setup](ANDROID.md). The package requires
+After publication use `inappify_sdk: ^0.2.4`. The Android dependency is Kotlin
+`v0.2.3`; see [Android build/local checkout setup](ANDROID.md). The package requires
 the Flutter/Dart versions in pubspec.yaml and a compatible host Android toolchain.
 Use FlutterFragmentActivity for Bazaar/Myket purchase UI.
 

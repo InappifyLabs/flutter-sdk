@@ -83,7 +83,7 @@ Confirm compatible services when diagnosing missing Direct correlation.
 
 ## Myket product types and timed subscriptions
 
-This Android path requires Flutter **0.2.3**, its pinned Kotlin **v0.2.2**, and a
+This Android path requires Flutter **0.2.4**, its pinned Kotlin **v0.2.3**, and a
 compatible deployed V2 commerce backend. The [official Myket Java guide](https://myket.ir/kb/pages/java/)
 documents consumable and non-consumable in-app purchases. Inappify implements
 timed subscriptions on that in-app flow; do not promise Myket native subscriptions
@@ -108,6 +108,28 @@ verification-status responses must authorize consumption with
 contract fields, not client-set purchase parameters. Missing authorization, pending
 verification, or network/consume failure retains paid work for recovery; do not
 clear the journal or start another charge as a workaround.
+
+For Kotlin v0.2.3 recovery, the type recorded for the committed server purchase is
+authoritative, even when an older pending operation says a different type. Do not
+change catalog types or rebuild the Package to repair that operation. A later
+catalog edit must not reinterpret an already committed permanent purchase.
+The native coordinator validates `productType` (1 subscription, 2 consumable,
+3 non-consumable), matching `source`/`productIdentifier`, payment/event IDs, and
+consistent delivery state. Consumables additionally require `deliveryId` and
+`alreadyDelivered`; a completed subscription requires `requiresConsumption: true`.
+These checks are Myket-specific and must not change Bazaar or Direct semantics.
+
+`alreadyProcessed: true` or HTTP 200 alone is not evidence that access/inventory
+was delivered. With committed access, an older Myket subscription receipt can be
+consumed without another grant or extension, even if that access has since expired.
+For consumables, confirmed `alreadyDelivered` skips duplicate host delivery and
+resumes only the remaining consumption work. Missing/mismatched evidence must
+retain the receipt and pending operation for reconciliation.
+
+If purchase fails before store UI, keep the original attempt and inspect the safe
+`storeResponseCode` detail added by Kotlin v0.2.3. `PURCHASE_FAILED` alone does not
+prove an owned unconsumed receipt; older logs cannot recover the discarded native
+callback code. Do not request raw tokens, signatures, keys or full receipt logs.
 
 The native coordinator consumes and checkpoints this receipt without invoking the
 host consumable delivery handler. Do not grant subscription time in that handler,
@@ -241,6 +263,6 @@ Subscriptions and non-consumables must never be delivered as host inventory cred
 Myket timed-subscription consumption is handled by the SDK as described above;
 this host delivery recipe does not apply to it.
 
-These native Dart recipes are unsupported on Flutter Web 0.2.3. Direct JS 0.2.0
+These native Dart recipes are unsupported on Flutter Web 0.2.4. Direct JS 0.2.0
 has separate delivery APIs; see [Web](web.md). Do not call a second JS session
 from Flutter to bypass its facade.

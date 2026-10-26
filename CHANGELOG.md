@@ -1,3 +1,9 @@
+## 0.2.4
+
+- Pin Android to Kotlin v0.2.3 for server-authoritative Myket product types and recovery of older, already-granted purchases without a duplicate entitlement or inventory grant.
+- Preserve subscription consumption after committed access, consumable consumption after confirmed delivery, and permanent-product ownership without consumption. Keep Bazaar, Direct, iOS/Web behavior and native protocol v1 unchanged.
+- Update the official integration skill with legacy receipt recovery, required server evidence and safe failure diagnostics. Deploy the matching commerce backend and publish Kotlin v0.2.3 before this Flutter release.
+
 ## 0.2.3
 
 - Update Android to Kotlin v0.2.2 for Myket manually renewed timed subscriptions, using consumable Myket SKUs mapped to Inappify SUBSCRIPTION products.
