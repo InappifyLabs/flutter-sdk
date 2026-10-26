@@ -1,3 +1,9 @@
+## 0.2.5
+
+- Pin Android to Kotlin v0.2.4: compact Myket purchase metadata prevents size-related payment-screen failures while retaining full recovery and server purchase bindings. Older receipts remain recoverable.
+- Expose safe Myket callback codes and exception/stage categories through native history; reject oversized new contexts before billing. Preserve existing uncertain attempts and exactly-once fulfillment.
+- Include the updated integration skill. Bazaar, Direct, iOS/Web behavior and the channel protocol remain unchanged.
+
 ## 0.2.4
 
 - Pin Android to Kotlin v0.2.3 for server-authoritative Myket product types and recovery of older, already-granted purchases without a duplicate entitlement or inventory grant.

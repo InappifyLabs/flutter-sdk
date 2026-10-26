@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 
 /// Mobile behavior version, independent of the host application's version.
-const goV2SdkVersion = '0.2.4';
+const goV2SdkVersion = '0.2.5';
 
 /// Public trust anchor shared with the native Kotlin SDK.
 /// Downloaded keys may alias these bytes, but may never establish new trust.
