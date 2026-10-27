@@ -2,16 +2,21 @@
 
 ## Release baseline
 
-This release uses Flutter **0.2.6** with Kotlin **v0.2.6** and unchanged Web
-provider **0.2.0**. The native release adds build-time store isolation while retaining compact Myket
-purchase metadata, safe diagnostics, server-authoritative recovery and committed fulfillment. Deploy the
+This release uses Flutter **0.2.7** with Kotlin **v0.2.7** and unchanged Web
+provider **0.2.0**. The native release adds Myket preparation/dispatch tracking,
+ten-minute Android pending recovery and Bazaar/Myket trial preflight while retaining
+store isolation, server-authoritative recovery and committed fulfillment. Deploy the
 matching commerce backend before upgrading clients. Inspect the host's resolved
 dependency before applying the new recovery contract.
 
+Trial preflight requires the matching purchase route's DONE/NEEDSTORE behavior
+and native_purchase_attempts.is_trial_check migration. The ten-minute deadline
+does not expire uncertain payments or change host application's own purchase guard.
+
 | Component | Version | Tagged source |
 | --- | --- | --- |
-| Flutter `inappify_sdk` | 0.2.6 | [flutter-sdk v0.2.6](https://github.com/InappifyLabs/flutter-sdk/tree/v0.2.6) |
-| Android Kotlin dependency | v0.2.6 | [kotlin-sdk v0.2.6](https://github.com/InappifyLabs/kotlin-sdk/tree/v0.2.6) |
+| Flutter `inappify_sdk` | 0.2.7 | [flutter-sdk v0.2.7](https://github.com/InappifyLabs/flutter-sdk/tree/v0.2.7) |
+| Android Kotlin dependency | v0.2.7 | [kotlin-sdk v0.2.7](https://github.com/InappifyLabs/kotlin-sdk/tree/v0.2.7) |
 | Browser provider `@inappifylabs/web-sdk` | 0.2.0 | [web-sdk v0.2.0](https://github.com/InappifyLabs/web-sdk/tree/v0.2.0), commit `1b59a018679be6f717feca7cc6f1ea27198f233f` |
 
 This is a fixed compatibility baseline, not a claim to track the latest release.
@@ -32,7 +37,7 @@ Flutter static methods share one owner. Do not configure another instance to wor
 around platform support. The native HTTP V2 contract and Web `/api/web/v1`
 contract are different; a local channel protocol version does not select HTTP V1.
 
-## Flutter 0.2.6 support (unchanged public APIs)
+## Flutter 0.2.7 support (unchanged public APIs)
 
 "Unsupported" means do not build an integration around that operation on this
 backend, even if a Dart signature or a newer JS method exists.
@@ -96,14 +101,14 @@ fresh offerings fetch; an empty attribute queue still permits that fetch.
 ## Authoritative source map
 
 The Flutter links document the public API. For native recovery, inspect the
-resolved Kotlin v0.2.6 source and matching deployed backend as well.
+resolved Kotlin v0.2.7 source and matching deployed backend as well.
 
-- [Public Flutter facade](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.6/lib/inappify_sdk.dart)
-- [Coordinator and mobile-only gates](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.6/lib/src/application/inappify_coordinator.dart)
-- [Web adapter and supported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.6/lib/src/platform/web/web_inappify_platform.dart)
-- [Default exact lookup / unsupported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.6/lib/inappify_sdk_platform_interface.dart)
-- [iOS Go V2 implementation](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.6/lib/src/platform/mobile/go_v2_platform.dart)
-- [Android channel contract](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.6/android/src/main/kotlin/com/inappify/inappify_sdk/InappifyChannelContract.kt)
+- [Public Flutter facade](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.7/lib/inappify_sdk.dart)
+- [Coordinator and mobile-only gates](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.7/lib/src/application/inappify_coordinator.dart)
+- [Web adapter and supported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.7/lib/src/platform/web/web_inappify_platform.dart)
+- [Default exact lookup / unsupported operations](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.7/lib/inappify_sdk_platform_interface.dart)
+- [iOS Go V2 implementation](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.7/lib/src/platform/mobile/go_v2_platform.dart)
+- [Android channel contract](https://github.com/InappifyLabs/flutter-sdk/blob/v0.2.7/android/src/main/kotlin/com/inappify/inappify_sdk/InappifyChannelContract.kt)
 - [Direct JS implementation](https://github.com/InappifyLabs/web-sdk/blob/v0.2.0/src/client.ts)
 
 Known documentation drift: older Flutter Web examples pass removed `country` and

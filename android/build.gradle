@@ -1,5 +1,5 @@
 group = "com.inappify.inappify_sdk"
-version = "0.2.6"
+version = "0.2.7"
 
 buildscript {
     ext.kotlin_version = "2.4.0"
@@ -80,7 +80,7 @@ rootProject.allprojects {
     dependencies {
         components {
             withModule("com.github.InappifyLabs:kotlin-sdk") { details ->
-                if (details.id.version == "v0.2.6") {
+                if (details.id.version == "v0.2.7") {
                     // JitPack drops classifiers from .module file URLs. Repair only
                     // artifact URLs; retain the published per-store dependency graph.
                     ["allStores", "myket", "bazaar", "direct"].each { store ->
@@ -100,7 +100,7 @@ rootProject.allprojects {
 }
 
 dependencies {
-    implementation("com.github.InappifyLabs:kotlin-sdk:v0.2.6") {
+    implementation("com.github.InappifyLabs:kotlin-sdk:v0.2.7") {
         // Also select the variant when the host resolves transitive dependencies.
         attributes {
             attribute(

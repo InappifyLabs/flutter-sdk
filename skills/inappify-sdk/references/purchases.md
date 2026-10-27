@@ -28,6 +28,44 @@ membership, receipt verification and ownership.
 
 ## Android: native purchase and attempt correlation
 
+### Ten-minute reconciliation and host purchase guards (0.2.7)
+
+Android V2 schedules recovery for pending attempts after ten minutes, using the
+existing serialized recovery coordinator. This applies to Myket, Bazaar and
+Android Direct; each keeps its own verification/fulfillment contract. Recovery
+can also run earlier on existing startup, lifecycle or explicit-sync triggers.
+With unresolved work it schedules another check after ten minutes. The timer
+runs only while the client is configured, foreground, online and network-enabled;
+resume/reconnect restores scheduling. A stopped process cannot run the timer;
+startup recovery reads retained evidence. No host polling loop is required.
+
+The deadline never expires a receipt or converts PENDING to FAILED. Only matching
+authoritative terminal results or proven pre-dispatch failure resolve an attempt.
+Empty inventory, elapsed time, an unknown history lookup and a failed refresh
+remain inconclusive. Confirmed cancellation permits a new explicit user action;
+the SDK never automatically launches a replacement payment.
+
+Host journals should isolate app/customer/protocol/product (and retain original
+market/offering/package context). An uncertain product X must not globally block
+product Y. A definite terminal failure of X can release X; a genuinely uncertain
+X remains protected against a duplicate charge. Match the original attempt and
+context before resolving its record; preserve other products and old evidence.
+Keep unknown/corrupt legacy records conservative until their scope is established.
+This host policy requires application changes separately from an SDK upgrade.
+
+### Bazaar/Myket trial preflight (0.2.7)
+
+The selected catalog package's trial days and cached customer eligibility guide
+whether native billing first calls the existing authenticated purchase route.
+The server is authoritative: DONE completes eligible trial activation without
+paid UI; NEEDSTORE allows billing. Known ineligible customers/zero trial days
+continue directly to billing; unknown metadata requires a server decision.
+Uncertain trial checks retain their original key/package across restart and are
+replayed before another charge. Do not call this endpoint directly from the host.
+Deploy matching backend purchase behavior and the migration adding is_trial_check
+to native_purchase_attempts before upgrading clients. This adds no host-facing
+trial-only request flag and does not change iOS/Web payment flows.
+
 For Bazaar/Myket the Flutter host Activity must extend `FlutterFragmentActivity`;
 the plugin supplies the foreground Activity to Kotlin. Preserve the existing
 package name and host integrations when changing `MainActivity`. No Activity is
@@ -83,7 +121,18 @@ Confirm compatible services when diagnosing missing Direct correlation.
 
 ## Myket product types and timed subscriptions
 
-This Android path requires Flutter **0.2.6**, its pinned Kotlin **v0.2.6**, and a
+Kotlin v0.2.7 records MYKET_PURCHASE_PREPARING before billing setup and must
+durably record MYKET_PURCHASE_DISPATCHED before launching the payment activity.
+Blocking billing-support/buy-intent calls run off the UI thread; late responses
+after timeout/close cannot launch UI. A proven pre-dispatch failure is terminal
+with outcomeMayHaveCommitted=false. A history lookup after restart resolves
+explicit interrupted preparation as MYKET_PURCHASE_NOT_STARTED and emits its
+matching terminal update. This local reconciliation makes no network/store call.
+Confirmed store cancellation is terminal. Dispatched/legacy unmarked uncertain
+attempts remain pending. These Myket preparation rules do not alter Bazaar or
+Direct billing callbacks. Never relabel an old unmarked attempt as preparation.
+
+This Android path requires Flutter **0.2.7**, its pinned Kotlin **v0.2.7**, and a
 compatible deployed V2 commerce backend. The [official Myket Java guide](https://myket.ir/kb/pages/java/)
 documents consumable and non-consumable in-app purchases. Inappify implements
 timed subscriptions on that in-app flow; do not promise Myket native subscriptions
@@ -109,7 +158,7 @@ contract fields, not client-set purchase parameters. Missing authorization, pend
 verification, or network/consume failure retains paid work for recovery; do not
 clear the journal or start another charge as a workaround.
 
-For Kotlin v0.2.6 recovery, the type recorded for the committed server purchase is
+For Kotlin v0.2.7 recovery, the type recorded for the committed server purchase is
 authoritative, even when an older pending operation says a different type. Do not
 change catalog types or rebuild the Package to repair that operation. A later
 catalog edit must not reinterpret an already committed permanent purchase.
@@ -126,7 +175,7 @@ For consumables, confirmed `alreadyDelivered` skips duplicate host delivery and
 resumes only the remaining consumption work. Missing/mismatched evidence must
 retain the receipt and pending operation for reconciliation.
 
-Kotlin v0.2.6 / Flutter 0.2.6 compact Myket purchase metadata internally, preserving
+Kotlin v0.2.7 / Flutter 0.2.7 compact Myket purchase metadata internally, preserving
 the full recovery and server purchase bindings. Hosts must not build or rewrite
 developer payloads. Older signed JSON receipts remain supported; Bazaar payloads
 are unchanged. A conservative 256-byte UTF-8 budget applies only to Myket metadata,
@@ -137,7 +186,7 @@ attempt; never rewrite the key or context of an existing uncertain attempt.
 
 If purchase fails before store UI, preserve the original attempt and inspect safe
 `storeResponseCode`, `storeFailureStage` and `storeExceptionCategory` details.
-Kotlin v0.2.6 retains these in durable attempt history. Stages distinguish `SETUP`,
+Kotlin v0.2.7 retains these in durable attempt history. Stages distinguish `SETUP`,
 `OPERATION_START` and `PURCHASE_CALLBACK`; exception categories are fixed labels,
 not raw exception messages. An absent numeric code in older host/history logs does
 not prove an exception: a logger may have discarded it. `PURCHASE_FAILED` alone
@@ -278,6 +327,6 @@ Subscriptions and non-consumables must never be delivered as host inventory cred
 Myket timed-subscription consumption is handled by the SDK as described above;
 this host delivery recipe does not apply to it.
 
-These native Dart recipes are unsupported on Flutter Web 0.2.6. Direct JS 0.2.0
+These native Dart recipes are unsupported on Flutter Web 0.2.7. Direct JS 0.2.0
 has separate delivery APIs; see [Web](web.md). Do not call a second JS session
 from Flutter to bypass its facade.

@@ -8,7 +8,7 @@ its own argument even when the SDK doesn't. Trace what the wrapper invokes;
 remove or adapt the host option only with its callers accounted for. Do not
 announce that an SDK flag exists solely from a host wrapper signature.
 
-| Legacy/new integration temptation | Correct treatment for Flutter 0.2.6 |
+| Legacy/new integration temptation | Correct treatment for Flutter 0.2.7 |
 | --- | --- |
 | `login` / `logout` | Public facade uses `logIn` / `logOut` and their typed variants; Web uses ticket/OTP, not plain ID login |
 | Market/RSA/app version passed to ordinary configure | `configure(apiKey:, appUserIdentifier:)`; metadata/server supply native context |
@@ -20,6 +20,8 @@ announce that an SDK flag exists solely from a host wrapper signature.
 | `checkEntitlement(forceRefresh: ...)` | Read CustomerInfo under intended supported policy, then active entitlements / synchronous helpers |
 | Reconstructed purchase from IDs/display fields | Pass the actual catalog Package through `InappifyPurchaseParams` |
 | Treat any success event/empty sync as resolving the last payment | Match original attempt and scope; unknown/unrelated outcomes retain pending host record |
+| Delete a pending purchase after ten minutes | Let Android SDK reconcile; elapsed time alone never proves cancellation or no charge |
+| Disable every product because X has an uncertain attempt | Scope the host guard by app/customer/protocol/product; preserve X and allow unrelated products |
 
 Do not modify SDK private APIs, server contracts, caches, retry scheduling or
 durable paid work during a host rename. Legacy JS options intentionally remain
@@ -39,6 +41,9 @@ target backend contract, not only a fake universal facade:
 - One purchase tap, cancellation, timeout/offline, process restart, unknown
   attempt history, matching outcome, unrelated event, changed customer, repeated
   event. No second charge or erased unresolved journal from uncertainty.
+- Ten-minute Android recovery without new payment UI; empty inventory/network
+  failure stays pending, terminal matching cancellation/failure releases only its
+  product, restart/resume/reconnect and account changes preserve original scopes.
 - Direct redirect and return: preserve correlation, no grant from query status,
   authoritative status/access; iOS cannot use Web checkout APIs.
 - Consumable grant commits once, confirm fails, restart/retry, duplicate delivery,
@@ -65,17 +70,17 @@ these are not assertions that an autonomous agent evaluation was executed.
 
 | Prompt | Required decision |
 | --- | --- |
-| "Add purchases to Flutter Android 0.2.6; app uses FlutterActivity." | Preserve host integrations, require FlutterFragmentActivity for store UI, use Package and Result; no Dart Activity argument. |
+| "Add purchases to Flutter Android 0.2.7; app uses FlutterActivity." | Preserve host integrations, require FlutterFragmentActivity for store UI, use Package and Result; no Dart Activity argument. |
 | "Refresh targeting on iOS; no attributes changed." | Combined sync is supported; fresh offerings still fetched subject to 5/60 quota; no duplicate flush. |
-| "JS 0.2.0 is loaded; call combined sync from Flutter Web 0.2.6." | Use the supported facade and existing provider, subject to its 5/60 quota; no second JS session. Older Flutter 0.2.1 lacked this bridge. |
-| "Use cacheOnly offline on Flutter Web 0.2.6." | Forward cacheOnly: no HTTP or wait for pending HTTP; return CACHE_MISS if absent. Older Flutter 0.2.1 ignored the policy. |
+| "JS 0.2.0 is loaded; call combined sync from Flutter Web 0.2.7." | Use the supported facade and existing provider, subject to its 5/60 quota; no second JS session. Older Flutter 0.2.1 lacked this bridge. |
+| "Use cacheOnly offline on Flutter Web 0.2.7." | Forward cacheOnly: no HTTP or wait for pending HTTP; return CACHE_MISS if absent. Older Flutter 0.2.1 ignored the policy. |
 | "Login this PWA by customer ID." | Use backend ticket/authenticated helper or OTP; no client-created ticket/server secret. |
 | "After Android restart lookup returns successful null; retry payment now." | Unknown; retain attempt/context, reconcile matching native result; no automatic new charge. |
 | "Retry iOS Direct using the same key guarantees no duplicate." | Reject guarantee: local correlation only; reconcile before another payment. |
 | "Confirm coins immediately on DELIVERY_REQUIRED." | Grant durably once first; then handler delivered OR manual confirmation; no double grant. |
-| "Myket is installed but Flutter 0.2.2 rejects subscriptions." | Explain the older-version gate; recommend the coordinated Flutter 0.2.6/Kotlin v0.2.6 and compatible backend, matching consumable Myket SKU with Inappify SUBSCRIPTION and package duration. Do not relabel the catalog or promise automatic renewal. |
+| "Myket is installed but Flutter 0.2.2 rejects subscriptions." | Explain the older-version gate; recommend the coordinated Flutter 0.2.7/Kotlin v0.2.7 and compatible backend, matching consumable Myket SKU with Inappify SUBSCRIPTION and package duration. Do not relabel the catalog or promise automatic renewal. |
 | "Consume a Myket subscription immediately after the store callback." | No host consume: await verified server grant and native consumption authorization; SDK handles consumption/retry without a host inventory delivery. |
-| "An old Myket receipt is already processed but local type differs." | Use the coordinated 0.2.6/v0.2.6 recovery contract and matching backend; retain the journal, require matching scope and committed server type/delivery evidence, and never grant/extend twice. |
+| "An old Myket receipt is already processed but local type differs." | Use the coordinated 0.2.7/v0.2.7 recovery contract and matching backend; retain the journal, require matching scope and committed server type/delivery evidence, and never grant/extend twice. |
 | "Consume every Myket receipt to unblock another purchase." | Never consume recorded NON_CONSUMABLE purchases. Subscription consumption requires committed access; consumables require confirmed delivery. Do not infer either from HTTP 200 or alreadyProcessed alone. |
 | "Change Bazaar and Direct to follow the Myket cleanup rule." | Keep their existing fulfillment and recovery contracts; this change is Myket-specific. |
 | "Old backend omitted requiresConsumption; clear pending work and buy again." | Preserve the original receipt/attempt, deploy compatible backend and reconcile; no second charge or client-forged authorization. |

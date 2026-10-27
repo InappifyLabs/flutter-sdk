@@ -1,3 +1,10 @@
+## 0.2.7
+
+- Pin Android to Kotlin v0.2.7: distinguish Myket preparation from payment dispatch, avoid blocking the UI during billing preparation, and prevent late payment screens after timeout or close. Resolve only proven pre-dispatch failures; keep uncertain dispatched and older attempts for reconciliation.
+- Reconcile pending Android purchases after ten minutes while the configured app is foreground and connected. Reuse existing receipt/status verification and retry unresolved work without launching another payment. Elapsed time and empty inventory never imply cancellation or failed payment.
+- Check eligible Bazaar/Myket package trials through the existing purchase route before opening paid billing. Require the matching backend DONE/NEEDSTORE contract and native_purchase_attempts.is_trial_check migration before upgrading clients.
+- Include the updated integration skill, including host journals scoped by product. Host application changes must be applied separately. Preserve store-specific packaging, fulfillment, and iOS/Web behavior.
+
 ## 0.2.6
 
 - Pin Android to Kotlin v0.2.6.

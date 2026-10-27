@@ -1,7 +1,7 @@
 # Inappify Flutter SDK
 
 Flutter SDK for Inappify sessions, offerings, entitlements and purchases.
-The **0.2.6** API follows the current Kotlin SDK. Android delegates to
+The **0.2.7** API follows the current Kotlin SDK. Android delegates to
 Kotlin through MethodChannel; Kotlin owns purchase, cache and automatic recovery.
 iOS keeps its Dart Direct-payment backend; Web uses the separately loaded
 JavaScript SDK. Store purchases and native delivery callbacks are Android-only.
@@ -9,7 +9,7 @@ Flutter Web requires `@inappifylabs/web-sdk` **0.2.0+**. It supports combined
 attributes/offerings sync and all four CustomerInfo policies, defaulting explicitly
 to `cachedOrFetched`. See the [Web setup and cache contract](doc/WEB.md).
 
-Android store packaging for the **0.2.6** release is described in
+Android store packaging for the **0.2.7** release is described in
 [store-specific builds](doc/ANDROID_STORES.md). Set `inappifyStore=myket` or
 `inappifyStore=bazaar` at build time; API keys alone do not remove permissions.
 
@@ -61,7 +61,7 @@ the same logical purchase. Consumables require a durable grant; see
 
 Convenience operations retain nullable/bool results. Their `*Result` companions
 preserve typed failures and snapshots. See the [complete reference](doc/API_REFERENCE.md).
-The Android 0.2.6 release uses the coordinated native `v0.2.6` dependency;
+The Android 0.2.7 release uses the coordinated native `v0.2.7` dependency;
 [Android development setup](doc/ANDROID.md) supports the current local checkout.
 
 ## Documentation
