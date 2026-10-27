@@ -76,6 +76,29 @@ kotlin {
     }
 }
 
+rootProject.allprojects {
+    dependencies {
+        components {
+            withModule("com.github.InappifyLabs:kotlin-sdk") { details ->
+                if (details.id.version == "v0.2.6") {
+                    // JitPack drops classifiers from .module file URLs. Repair only
+                    // artifact URLs; retain the published per-store dependency graph.
+                    ["allStores", "myket", "bazaar", "direct"].each { store ->
+                        ["Api", "Runtime"].each { usage ->
+                            details.withVariant("${store}ReleaseVariantRelease${usage}Publication") {
+                                withFiles {
+                                    removeAllFiles()
+                                    addFile("kotlin-sdk-${details.id.version}-${store}Release.aar")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 dependencies {
     implementation("com.github.InappifyLabs:kotlin-sdk:v0.2.6") {
         // Also select the variant when the host resolves transitive dependencies.
