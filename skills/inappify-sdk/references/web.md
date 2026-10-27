@@ -1,4 +1,4 @@
-# Web 0.2.0 and Flutter Web 0.2.5
+# Web 0.2.0 and Flutter Web 0.2.6
 
 Read the [platform matrix](platforms.md) before sharing a mobile example with a
 PWA. Direct JavaScript APIs and Flutter bridge coverage are not identical.
@@ -152,9 +152,9 @@ failure is not proof no checkout exists. Keep host correlation when required.
 Timeout/cancellation of observation does not undo the payment; reconcile the
 same checkout. A paid checkout still isn't a consumable host inventory grant.
 
-## Flutter 0.2.2–0.2.5 cache and sync contract
+## Flutter 0.2.2–0.2.6 cache and sync contract
 
-Flutter 0.2.2–0.2.5 requires provider 0.2.0+. It forwards combined sync to the same
+Flutter 0.2.2–0.2.6 requires provider 0.2.0+. It forwards combined sync to the same
 provider instance: fresh customer information, then refreshed offerings. Web
 setters already write to the server; do not invent an offline queue or upload
 attributes again. The provider admits five calls per rolling sixty seconds,

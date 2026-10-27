@@ -1,5 +1,5 @@
 group = "com.inappify.inappify_sdk"
-version = "0.2.5"
+version = "0.2.6"
 
 buildscript {
     ext.kotlin_version = "2.4.0"
@@ -26,6 +26,12 @@ allprojects {
 
 apply plugin: "com.android.library"
 
+// Build-time packaging is independent of the server-selected runtime marketplace.
+def inappifyStore = providers.gradleProperty("inappifyStore").getOrElse("allStores")
+if (!(inappifyStore in ["allStores", "myket", "bazaar", "direct"])) {
+    throw new GradleException("inappifyStore must be allStores, myket, bazaar, or direct")
+}
+
 android {
     if (project.android.hasProperty("namespace")) {
         namespace = "com.inappify.inappify_sdk"
@@ -36,7 +42,8 @@ android {
 
     defaultConfig {
         minSdk = 21
-        // Marketplace manifest settings are supplied by the native SDK.
+        // Select the native release variant, including its dependencies and manifest.
+        missingDimensionStrategy "inappifyStore", inappifyStore
     }
 
     compileOptions {
@@ -70,7 +77,15 @@ kotlin {
 }
 
 dependencies {
-    implementation "com.github.InappifyLabs:kotlin-sdk:v0.2.4"
+    implementation("com.github.InappifyLabs:kotlin-sdk:v0.2.6") {
+        // Also select the variant when the host resolves transitive dependencies.
+        attributes {
+            attribute(
+                com.android.build.api.attributes.ProductFlavorAttr.of("inappifyStore"),
+                objects.named(com.android.build.api.attributes.ProductFlavorAttr, inappifyStore)
+            )
+        }
+    }
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
 
     testImplementation platform("org.junit:junit-bom:5.10.2")

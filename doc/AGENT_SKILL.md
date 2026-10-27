@@ -1,8 +1,8 @@
 # Official Inappify SDK agent skill
 
 The distributable skill lives at [`skills/inappify-sdk`](../skills/inappify-sdk/SKILL.md).
-Its release baseline is Flutter **0.2.4**, its Android Kotlin dependency
-**v0.2.3**, and the independent Web JavaScript provider **0.2.0**.
+Its release baseline is Flutter **0.2.6**, its Android Kotlin dependency
+**v0.2.6**, and the independent Web JavaScript provider **0.2.0**.
 
 It teaches an agent to select public methods, respect platform differences, and
 preserve identity, caches, uncertain purchase attempts and durable consumable
@@ -53,8 +53,8 @@ npx skills update inappify-sdk
 See the [skills CLI update reference](https://github.com/vercel-labs/skills#other-commands).
 For manual or built-in-installer copies, replace the whole skill folder from
 the repository, including its references and agent metadata. Start a new turn or
-reload the agent afterward. The current skill targets Flutter 0.2.4, Kotlin
-v0.2.3 and Web provider 0.2.0; it retains the historical Flutter Web 0.2.1 caveat.
+reload the agent afterward. The current skill targets Flutter 0.2.6, Kotlin
+v0.2.6 and Web provider 0.2.0; it retains the historical Flutter Web 0.2.1 caveat.
 
 ### Manual installation
 
@@ -74,7 +74,7 @@ for current Codex discovery and invocation behavior.
 
 Invoke it explicitly with `$inappify-sdk`, for example:
 
-> Use $inappify-sdk to integrate Flutter inappify_sdk 0.2.4. Target Android, iOS
+> Use $inappify-sdk to integrate Flutter inappify_sdk 0.2.6. Target Android, iOS
 > Direct and Web provider 0.2.0. Inspect my installed versions first and preserve
 > existing pending purchases and inventory grants.
 
@@ -84,6 +84,7 @@ implicit invocation. Other agents can use the portable `SKILL.md`/references.
 
 ## Coverage and limits
 
+- [Android build-time store selection and manifest workaround](../skills/inappify-sdk/references/android-stores.md)
 - [Platform/version matrix](../skills/inappify-sdk/references/platforms.md)
 - [Flutter signatures, examples and defaults](../skills/inappify-sdk/references/flutter-api.md)
 - [Purchases, automatic/manual recovery and delivery](../skills/inappify-sdk/references/purchases.md)

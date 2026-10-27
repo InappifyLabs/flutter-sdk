@@ -1,3 +1,10 @@
+## 0.2.6
+
+- Pin Android to Kotlin v0.2.6.
+- Add build-time `myket`, `bazaar`, `direct`, and `allStores` packaging. Include Poolakey only in Bazaar/allStores and Myket code, resources and manifest components only in Myket/allStores.
+- Keep runtime API-key selection, purchase verification, pending operations and recovery unchanged; excluded stores fail with `UNSUPPORTED_MARKET`.
+- Publish Gradle Module Metadata with all release variants; document migration, CI settings and the channel-specific manifest workaround.
+
 ## 0.2.5
 
 - Pin Android to Kotlin v0.2.4: compact Myket purchase metadata prevents size-related payment-screen failures while retaining full recovery and server purchase bindings. Older receipts remain recoverable.
