@@ -1,16 +1,38 @@
 ---
 name: inappify-sdk
-description: "Integrate, migrate, or troubleshoot Inappify SDK sessions, offerings, attributes, discounts, entitlements, purchases, payment returns, consumable delivery, and recovery. Use for Flutter inappify_sdk 0.2.7 on Android/iOS/Web, Kotlin v0.2.7, and @inappifylabs/web-sdk 0.2.0, including Myket manually renewed timed subscriptions. Distinguishes platform support, cache policies, identity authentication, and uncertain purchase handling."
+description: "Integrate, migrate, or troubleshoot Inappify SDK sessions, offerings, attributes, discounts, entitlements, purchases, payment returns, consumable delivery, and recovery. Use for Flutter inappify_sdk 0.2.7 on Android/iOS/Web, Kotlin v0.2.7, and @inappifylabs/web-sdk 0.2.0, including Myket manually renewed timed subscriptions. Also integrate PWA host backends with server-to-server identity tickets, subscriber APIs, offerings, promotional grants, and assigned discount codes. Distinguishes platform support, cache policies, identity authentication, and uncertain purchase handling."
 license: Apache-2.0
 ---
 
 # Inappify SDK
 
-Help a developer integrate the SDK through its public API. This skill is
+Help a developer integrate the SDK through its public API or connect a trusted
+host backend through the documented server-to-server API. This skill is
 versioned integration guidance, not an MCP server or a payment execution tool.
 It needs no account credentials, live production access, or extra MCP connection.
 
-## Establish the contract first
+## PWA host backend and server-to-server API
+
+For host backend authentication, Identity Ticket issuance, server customer reads
+or attributes, per-app offerings/overrides, promotional entitlements, or assigned
+discount codes, read [server-to-server integration](references/server-to-server.md).
+It documents exact routes, abilities, headers, payloads, responses, retry behavior,
+and current backend limitations. For browser session/checkout code, also read
+[Web integration](references/web.md). Server-only tasks do not require installing
+or upgrading a client SDK; establish the deployed backend contract instead.
+
+The production API origin is `https://api.inappify.com` (user-confirmed).
+When asked for ticket issuance, provide the full URL:
+`POST https://api.inappify.com/api/web/v1/server/identity-tickets`.
+Use another origin only for an explicitly configured alternative environment.
+
+Use the project secret only in the host backend. The browser receives a short-lived
+ticket and uses the Public Web App Key and SDK-owned session. Promotional grants
+can extend access again on retry, and server offering overrides currently do not
+automatically control Web SDK offering selection. Do not infer guarantees from
+endpoint names; use the reference's source-backed behavior.
+
+## Establish the SDK contract first
 
 1. Inspect the host's dependency declarations **and resolved versions**:
    `pubspec.yaml`/`pubspec.lock`, the Android SDK dependency, and the browser host's
@@ -92,9 +114,11 @@ combined sync and policy forwarding; do not apply the new contract to that versi
 
 ## Non-negotiable integration rules
 
-- Keep one backend owner. Use the Flutter facade; do not call MethodChannels,
+- Keep one SDK session owner. Use the Flutter facade; do not call MethodChannels,
   `src/` classes, Go/Laravel endpoints, or a second JS instance to bypass a
-  missing Flutter operation. A new SDK capability requires an explicit SDK task.
+  missing Flutter operation. This does not prohibit the documented trusted host
+  backend server-to-server integration above. A new SDK capability requires an
+  explicit SDK task.
 - Configure once per application session. Configure already owns startup
   prefetch/recovery. Do not pre-warm offerings in Android `Application.onCreate`,
   repeat configure from widget builds, or install duplicate Android recovery

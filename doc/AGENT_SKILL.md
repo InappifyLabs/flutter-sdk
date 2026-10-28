@@ -89,6 +89,7 @@ implicit invocation. Other agents can use the portable `SKILL.md`/references.
 - [Flutter signatures, examples and defaults](../skills/inappify-sdk/references/flutter-api.md)
 - [Purchases, automatic/manual recovery and delivery](../skills/inappify-sdk/references/purchases.md)
 - [Flutter Web bridge and direct JavaScript](../skills/inappify-sdk/references/web.md)
+- [PWA server-to-server authentication, subscribers, offerings, promotions and discount codes](../skills/inappify-sdk/references/server-to-server.md)
 - [Migration rules and validation scenarios](../skills/inappify-sdk/references/migration-and-validation.md)
 
 The matrix records current Flutter Web gaps explicitly: combined sync, native

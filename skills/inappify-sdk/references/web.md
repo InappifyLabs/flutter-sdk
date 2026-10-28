@@ -3,6 +3,11 @@
 Read the [platform matrix](platforms.md) before sharing a mobile example with a
 PWA. Direct JavaScript APIs and Flutter bridge coverage are not identical.
 
+For the host backend half of external login, read
+[server-to-server integration](server-to-server.md): ticket issuance, secret-key
+abilities, customer/offerings/promotional/discount APIs, and retry limitations.
+Keep those secret-key requests on the backend; browser calls stay SDK-owned.
+
 ## Browser setup and session ownership
 
 Use the **Public Web App Key**, an approved website origin and enabled Web
